@@ -1,17 +1,13 @@
 #include <stdio.h>
 #include <time.h>
 
-#ifdef __unix__
-	#define os __unix__
-#elif __APPLE__
-	#define os __APPLE__
-#endif
+#ifdef __unix__ || __APPLE__
 
-#ifdef os
 	#include <unistd.h>
 	#include <termios.h>
 	#include <sys/ioctl.h>
 	#include <unistd.h>
+
     void MsgBox(char *contenuto, char *finestra, int tipo){
         char cmd[1024];
         sprintf(cmd, "xmessage -center \"%s\"", s);
@@ -21,31 +17,33 @@
             exit(0);
         }
     }
+
+    const char CLEAR[]="clear";
+
 	#define character 1
 	#define getcharacter read();
-	const char CLEAR[]="clear";
 	#define resize system("resize -s 89 47");
+
 #elif defined(_WIN32) || defined(_WIN64)
 
     #include <Windows.h>
+
     void MsgBox(char *contenuto, char *finestra, int tipo){
         MessageBox(0, contenuto, finestra, tipo);
     }
+
+    const char CLEAR[]="cls";
+
     #define character kbhit();
     #define getcharacter getch();
-    const char CLEAR[]="cls";
     #define resize system("mode con:cols=89 lines=47");
+
 #endif
-
-
-void clear(){system(CLEAR);}
-char read(){};
 
 #define H 45
 #define B 88
-
 #define N 10
-// carattereì asci, h, b, type, verso, velocità, dimensione.
+//numero carattere asci, h, b, type, verso, velocità, dimensione.
 //types: 0-objectect 1-player 2-projectile
 #define P 7
 
@@ -62,7 +60,7 @@ char read(){};
 #define RIGHT2 'l'
 #define FIRE2 'o'
 
-//global
+//global variables
 int points1=0;
 int points2=0;
 int player1=88;
@@ -70,16 +68,9 @@ int player2=79;
 int islog=1;
 FILE *logfile;
 
-//da aggiungere:
-/*
--printare gli fps 4 volte al secondo
--far diminuire o aumentare il delay di ogni ciclo se gli fps scendono o salgono troppo in gioco
--multiplayer con socket e tcp
--multi-platform support
--per il multipyer: creare due funzioni di trasmission dal server, una trasmette solo le modifiche che sono avvenute(trasmissione continua e rapida) mentre l'altra ritrasmette tutte le variabili per un sync(ogni tanto)
-*/
-
-void printm(char w[H][B]);
+//prototypes
+void clear(){system(CLEAR);}
+char read(){};
 void Render(int debug,int fps,int delay,int fps_time, char w[H][B], int e[][P]);
 void winizializza(char x, char w[H][B]);
 void einizializza(int x, int e[N][P]);
@@ -93,14 +84,14 @@ int getsec();
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo);
 void printlog(char a[], int b, char c[]);
 
+//message box
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
     char msg[1024];
     sprintf(msg, "%s%c", mex, dato);
     MsgBox(msg,nome,tipo);
 }
 
-int menu();
-
+//print to log file
 void printlog(char a[], int b, char c[]){
     if(islog){
         char mex[30];
@@ -109,37 +100,69 @@ void printlog(char a[], int b, char c[]){
     }
 }
 
+//get the day
 int getday(){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     return tm.tm_mday;
 }
+//get the month
 int getmonth(){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     return tm.tm_mon + 1;
 }
+//get the year
 int getyear(){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     return tm.tm_year + 1900;
 }
+//get the hour
 int gethour(){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     return tm.tm_hour;
 }
+//get the minute
 int getmin(){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     return tm.tm_min;
 }
+//get the second
 int getsec(){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     return tm.tm_sec;
 }
 
+//initialize matrix "world" (w)
+void winizializza(char x, char w[H][B]){
+    int i,i2;
+
+    for(i=0;i<H;i++){
+        for(i2=0;i2<B;i2++){
+            w[i][i2]=x;
+        }
+    }
+}
+
+//initialize matrix "entity" (e)
+void einizializza(int x, int e[N][P]){
+    int i,i2;
+
+    for(i=0;i<H;i++){
+        for(i2=0;i2<B;i2++){
+            e[i][i2]=x;
+        }
+    }
+}
+
+//main menu
+int menu();
+
+//MAIN
 int main(){
     char ch;
     char w[H][B];
@@ -150,27 +173,20 @@ int main(){
     int ph=-1,pb=-1;
     int W,Wc;
     int i2;
-
     int h2=H-3,b2=B-6;
     int ph2=-1,pb2=-1;
-
     int isProjectile1=0;
     int isProjectile2=0;
-
     int contn=0;
 
-
     resize;
-
     winizializza(' ', w);
     einizializza(-1 , e);
 
     //log file
-
     if(islog){
         int numlogfile=0;
         char nomelogfile[6];
-
 
         if(!fopen("log_last.txt", "r+")){
             FILE *pFile1 = fopen("log_last.txt", "w");
@@ -196,7 +212,6 @@ int main(){
         if(i==0){
             Cstart=clock();
             i++;
-
         }
         else if(i==1){
             i=0;
@@ -209,7 +224,6 @@ int main(){
         if(kbhit()){
 
             ch = getcharacter;
-
 
             if(ch==FORWARD1)
                 h--;
@@ -238,8 +252,6 @@ int main(){
                 pb2=b2;
                 isProjectile2=1;
             }
-
-
         }
 
         //gestione projectiles
@@ -308,7 +320,6 @@ int main(){
             W=2;
         }
 
-
         Render(1,fps ,fps_time ,delay, w, e);
         Sleep(delay);
     }
@@ -317,27 +328,6 @@ int main(){
         fclose(logfile);
     MsgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
     return 0;
-}
-
-
-void winizializza(char x, char w[H][B]){
-    int i,i2;
-
-    for(i=0;i<H;i++){
-        for(i2=0;i2<B;i2++){
-            w[i][i2]=x;
-        }
-    }
-}
-
-void einizializza(int x, int e[N][P]){
-    int i,i2;
-
-    for(i=0;i<H;i++){
-        for(i2=0;i2<B;i2++){
-            e[i][i2]=x;
-        }
-    }
 }
 
 void Render(int debug,int fps,int fps_time,int delay, char w[H][B], int e[][P]){
@@ -469,7 +459,6 @@ void Render(int debug,int fps,int fps_time,int delay, char w[H][B], int e[][P]){
     daPrintare[cont]='\n';
     cont++;
 
-
     for(i=0;i<H;i++){
         for(i2=0;i2<B;i2++){
             sfondo=1;
@@ -499,15 +488,4 @@ void Render(int debug,int fps,int fps_time,int delay, char w[H][B], int e[][P]){
     }
         daPrintare[cont]='\0';
         printf("%s",daPrintare);
-}
-
-void printm(char w[H][B]){
-    int i,i2,cont=0;
-
-    for(i=0;i<H;i++){
-        for(i2=0;i2<B;i2++){
-            printf("%c",w[i][i2]);
-        }
-        printf("\n");
-    }
 }
