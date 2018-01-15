@@ -24,6 +24,7 @@
 	#define character 1
 	#define getcharacter read();
 	const char CLEAR[]="clear";
+	#define resize system("resize -s 89 47");
 #elif defined(_WIN32) || defined(_WIN64)
     #include <Windows.h>
     void MsgBox(char *contenuto, char *finestra, int tipo){
@@ -32,6 +33,7 @@
     #define character kbhit();
     #define getcharacter getch();
     const char CLEAR[]="cls";
+    #define resize system("mode con:cols=89 lines=47");
 #endif
 
 
@@ -121,7 +123,9 @@ int main(){
     int contn=0;
 
 
-    winizializza('#', w);
+    resize;
+
+    winizializza(' ', w);
     einizializza(-1 , e);
 
     //log file
