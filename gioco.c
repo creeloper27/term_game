@@ -1,4 +1,4 @@
- #include <stdio.h>
+#include <stdio.h>
 #include <time.h>
 
 #ifdef __unix__
@@ -26,6 +26,7 @@
 	const char CLEAR[]="clear";
 	#define resize system("resize -s 89 47");
 #elif defined(_WIN32) || defined(_WIN64)
+
     #include <Windows.h>
     void MsgBox(char *contenuto, char *finestra, int tipo){
         MessageBox(0, contenuto, finestra, tipo);
@@ -83,6 +84,14 @@ void Render(int debug,int fps,int delay,int fps_time, char w[H][B], int e[][P]);
 void winizializza(char x, char w[H][B]);
 void einizializza(int x, int e[N][P]);
 int menu();
+int getday();
+int getmonth();
+int getyear();
+int gethour();
+int getmin();
+int getsec();
+void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo);
+void printlog(char a[], int b);
 
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
     char msg[1024];
@@ -94,13 +103,41 @@ int menu();
 
 void printlog(char a[], int b){
     if(islog){
-        //time_t t = time(NULL);
-        //struct tm tm = *localtime(&t);
         char mex[30];
-        //sprintf(mex,"\n[%d:%d:%d] %s%d",tm.tm_hour, tm.tm_min, tm.tm_sec, a, b);
-        sprintf(mex,"\n%s%d",a, b);
+        sprintf(mex,"\n[%d:%d:%d] %s%d",gethour(), getmin(), getsec(), a, b);
         fprintf(logfile,mex);
     }
+}
+
+int getday(){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    return tm.tm_mday;
+}
+int getmonth(){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    return tm.tm_mon + 1;
+}
+int getyear(){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    return tm.tm_year + 1900;
+}
+int gethour(){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    return tm.tm_hour;
+}
+int getmin(){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    return tm.tm_min;
+}
+int getsec(){
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    return tm.tm_sec;
 }
 
 int main(){
@@ -152,10 +189,7 @@ int main(){
 
         sprintf(nomelogfile,"log_%d.txt",numlogfile);
         logfile = fopen(nomelogfile, "a+");
-        //time_t t = time(NULL);
-        //struct tm tm = *localtime(&t);
-        //fprintf("date: %d-%d-%d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-        fprintf(logfile, "date: gg/mm/aa");
+        fprintf(logfile, "date: %d-%d-%d", getyear(), getmonth(), getday());
     }
 
     while(points1<10&&points2<10){
@@ -232,15 +266,15 @@ int main(){
         //gestione e rilevamento morti
         if((h==ph2&&b==pb2)||(h==ph2&&b+1==pb2)){
             h=2;
-            b=2;
+            b=4;
             points2++;
             isProjectile2=0;
             ph2=-1;
             pb2=-1;
         }
         if((h2==ph&&b2==pb)||(h2==ph&&b-1==pb)){
-            h2=H-2;
-            b2=B-2;
+            h2=H-3;
+            b2=B-6;
             points1++;
             isProjectile1=0;
             ph=-1;
@@ -278,6 +312,8 @@ int main(){
         Render(1,fps ,fps_time ,delay, w, e);
         Sleep(delay);
     }
+    if(islog)
+        fclose(logfile);
     MsgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
     return 0;
 }
