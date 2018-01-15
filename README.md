@@ -8,5 +8,5 @@ For infos about the controls and other stuff look at the wiki
 
 ## Contributors:
 ### -Cattai Lorenzo     (name on github: "CreeLoPer27")
-### -Collodel Lorenzo   (name on github: "trollodel")
-### -Mozzoni Paolo      (name on github: "friedcicken")
+### -C. Lorenzo         (name on github: "trollodel")
+### -M. Paolo           (name on github: "friedcicken")
