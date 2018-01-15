@@ -91,7 +91,7 @@ int gethour();
 int getmin();
 int getsec();
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo);
-void printlog(char a[], int b);
+void printlog(char a[], int b, char c[]);
 
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
     char msg[1024];
@@ -101,10 +101,10 @@ void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
 
 int menu();
 
-void printlog(char a[], int b){
+void printlog(char a[], int b, char c[]){
     if(islog){
         char mex[30];
-        sprintf(mex,"\n[%d:%d:%d] %s%d",gethour(), getmin(), getsec(), a, b);
+        sprintf(mex,"\n[%d:%d:%d] %s%d%s",gethour(), getmin(), getsec(), a, b, c);
         fprintf(logfile,mex);
     }
 }
@@ -312,6 +312,7 @@ int main(){
         Render(1,fps ,fps_time ,delay, w, e);
         Sleep(delay);
     }
+    printlog("game-over ",W," vince!");
     if(islog)
         fclose(logfile);
     MsgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
