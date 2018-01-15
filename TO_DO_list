@@ -1,0 +1,6 @@
+-print fps-meter every 250 milliseconds
+-make the fps_delay variable to try and keep 60 fps
+-add multiplayer with sockets and tcp
+-continue multi-platform support
+-for multiplayer: create 2 functions for transimitting the data, one sync averything and is used every 5-10 seconds, the secondone syncs the live controls 60 times a second (60ticks)
+-add auto resize window
