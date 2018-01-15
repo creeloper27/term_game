@@ -39,11 +39,11 @@ void clear(){system(CLEAR);}
 char read(){};
 
 #define H 45
-#define B 80
+#define B 88
 
 #define N 10
 // carattereì asci, h, b, type, verso, velocità, dimensione.
-//types: 0-object
+//types: 0-objectect 1-player 2-projectile
 #define P 7
 
 //controls
@@ -78,8 +78,8 @@ FILE *logfile;
 
 void printm(char w[H][B]);
 void Render(int debug,int fps,int delay,int fps_time, char w[H][B], int e[][P]);
-void cinizializza(char x, char w[H][B]);
-void ninizializza(int x, char e[N][P]);
+void winizializza(char x, char w[H][B]);
+void einizializza(int x, int e[N][P]);
 int menu();
 
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
@@ -107,12 +107,12 @@ int main(){
     int e[N][P];
     int delay=16;
     int Cstart,i=0,fps=0,fps_time;
-    int h=2,b=2;
+    int h=2,b=4;
     int ph=-1,pb=-1;
     int W,Wc;
     int i2;
 
-    int h2=H-2,b2=B-2;
+    int h2=H-3,b2=B-6;
     int ph2=-1,pb2=-1;
 
     int isProjectile1=0;
@@ -121,8 +121,8 @@ int main(){
     int contn=0;
 
 
-    cinizializza(' ',w);
-    ninizializza(-1,e);
+    winizializza('#', w);
+    einizializza(-1 , e);
 
     //log file
 
@@ -278,7 +278,8 @@ int main(){
     return 0;
 }
 
-void cinizializza(char x, char w[H][B]){
+
+void winizializza(char x, char w[H][B]){
     int i,i2;
 
     for(i=0;i<H;i++){
@@ -288,12 +289,12 @@ void cinizializza(char x, char w[H][B]){
     }
 }
 
-void ninizializza(int x, char w[N][P]){
+void einizializza(int x, int e[N][P]){
     int i,i2;
 
     for(i=0;i<H;i++){
         for(i2=0;i2<B;i2++){
-            w[i][i2]=x+'0';
+            e[i][i2]=x;
         }
     }
 }
