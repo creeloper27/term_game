@@ -1,16 +1,48 @@
 #include <stdio.h>
 #include <time.h>
-
-#ifdef __unix__ || __APPLE__
+#include <stdlib.h>
+#if defined(__unix__)||defined(__APPLE__)
 
 	#include <unistd.h>
 	#include <termios.h>
 	#include <sys/ioctl.h>
-	#include <unistd.h>
+	#include <fcntl.h>
+	int kbhit(void)
+	{
+	  struct termios oldt, newt;
+	  int ch;
+	  int oldf;
+
+	  tcgetattr(STDIN_FILENO, &oldt);
+	  newt = oldt;
+	  newt.c_lflag &= ~(ICANON | ECHO);
+	  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	  oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+	  fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+	  ch = getchar();
+
+	  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	  fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+	  if(ch != EOF)
+	  {
+	    ungetc(ch, stdin);
+	    return 1;
+	  }
+
+	  return 0;
+	}	
+
+	void msleep(int ms){
+		char c[20];
+		sprintf(c,"sleep %f",(float)ms/1000.0);
+		system(c);
+	}
 
     void MsgBox(char *contenuto, char *finestra, int tipo){
         char cmd[1024];
-        sprintf(cmd, "xmessage -center \"%s\"", s);
+        sprintf(cmd, "xmessage -center \"%s\"", contenuto);
         if(fork()==0){
             close(1); close(2);
             system(cmd);
@@ -18,29 +50,30 @@
         }
     }
 
-    const char CLEAR[]="clear";
-
-	#define character 1
-	#define getcharacter read();
+#define getcharacter getchar();
+    char CLEAR[]="clear";
 	#define resize system("resize -s 89 47");
 
-#elif defined(_WIN32) || defined(_WIN64)
+#elif defined(_WIN32)||defined(_WIN64)
 
     #include <Windows.h>
 
+	void msleep(int ms){
+		Sleep(ms);	
+	}
     void MsgBox(char *contenuto, char *finestra, int tipo){
         MessageBox(0, contenuto, finestra, tipo);
     }
 
     const char CLEAR[]="cls";
 
-    #define character kbhit();
+    #define character kbhit()
     #define getcharacter getch();
     #define resize system("mode con:cols=89 lines=47");
 
 #endif
 
-#define H 45
+#define H 40
 #define B 88
 #define N 10
 //numero carattere asci, h, b, type, verso, velocità, dimensione.
@@ -66,11 +99,11 @@ int points2=0;
 int player1=88;
 int player2=79;
 int islog=1;
+int isrender=1;
 FILE *logfile;
 
 //prototypes
 void clear(){system(CLEAR);}
-char read(){};
 void Render(int debug,int fps,int delay,int fps_time, char w[H][B], int e[][P]);
 void winizializza(char x, char w[H][B]);
 void einizializza(int x, int e[N][P]);
@@ -160,7 +193,28 @@ void einizializza(int x, int e[N][P]){
 }
 
 //main menu
-int menu();
+int menu(){
+    char daprintare2[1024];
+    int cont=0,i=0;
+
+    for(i=0;i<(H-5)/2;i++){
+        daprintare2[cont]='\n';
+        cont++;
+    }
+    for(i=0;i<(B-15)/2;i++){
+        daprintare2[cont]='\n';
+        cont++;
+    }
+    daprintare2[cont]=218;
+    for(i=0;i<13;i++){
+        daprintare2[cont]=196;
+        cont++;
+    }
+    daprintare2[cont]=191;
+    printf("%s",daprintare2);
+    system("pause");
+    return 0;
+}
 
 //MAIN
 int main(){
@@ -186,7 +240,7 @@ int main(){
     //log file
     if(islog){
         int numlogfile=0;
-        char nomelogfile[6];
+        char nomelogfile[15];
 
         if(!fopen("log_last.txt", "r+")){
             FILE *pFile1 = fopen("log_last.txt", "w");
@@ -208,10 +262,11 @@ int main(){
         fprintf(logfile, "date: %d-%d-%d", getyear(), getmonth(), getday());
     }
 
+    menu();
     while(points1<10&&points2<10){
         if(i==0){
             Cstart=clock();
-            i++;
+            i--;
         }
         else if(i==1){
             i=0;
@@ -252,6 +307,10 @@ int main(){
                 pb2=b2;
                 isProjectile2=1;
             }
+            if(ch=='|'){
+                menu();
+            }
+
         }
 
         //gestione projectiles
@@ -321,7 +380,7 @@ int main(){
         }
 
         Render(1,fps ,fps_time ,delay, w, e);
-        Sleep(delay);
+        msleep(delay);
     }
     printlog("game-over ",W," vince!");
     if(islog)
@@ -458,6 +517,7 @@ void Render(int debug,int fps,int fps_time,int delay, char w[H][B], int e[][P]){
     cont++;
     daPrintare[cont]='\n';
     cont++;
+
 
     for(i=0;i<H;i++){
         for(i2=0;i2<B;i2++){
