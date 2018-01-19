@@ -32,7 +32,7 @@
 	  }
 
 	  return 0;
-	}	
+	}
 
 	void msleep(int ms){
 		char c[20];
@@ -50,7 +50,12 @@
         }
     }
 
-#define getcharacter getchar();
+    void getchar2(){
+        char c;
+        c=getchar();
+        printf("\b");
+    }
+#define getcharacter getchar2();
     char CLEAR[]="clear";
 	#define resize system("resize -s 89 47");
 
@@ -59,7 +64,7 @@
     #include <Windows.h>
 
 	void msleep(int ms){
-		Sleep(ms);	
+		Sleep(ms);
 	}
     void MsgBox(char *contenuto, char *finestra, int tipo){
         MessageBox(0, contenuto, finestra, tipo);
@@ -279,6 +284,7 @@ int main(){
         if(kbhit()){
 
             ch = getcharacter;
+
 
             if(ch==FORWARD1)
                 h--;
