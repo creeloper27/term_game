@@ -50,10 +50,11 @@
         }
     }
 
-    void getchar2(){
+    char getchar2(){
         char c;
         c=getchar();
         printf("\b");
+        return c;
     }
 #define getcharacter getchar2();
     char CLEAR[]="clear";
