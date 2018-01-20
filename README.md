@@ -7,6 +7,9 @@ If you want to try it without the need of compiling you can download the Windows
 For infos about the controls and other stuff look at the wiki
 
 ## Contributors:
-### -Cattai Lorenzo     (name on github: "CreeLoPer27")
-### -C. L.              (name on github: "trollodel")
-### -Mozzoni Paolo      (name on github: "friedchicken")
+### -Cattai Lorenzo
+(name on github: "CreeLoPer27")
+### -C. L.
+(name on github: "trollodel")
+### -Mozzoni Paolo
+(name on github: "friedchicken")
