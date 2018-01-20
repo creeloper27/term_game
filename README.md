@@ -13,5 +13,5 @@ For infos about the controls and other stuff look at the wiki
 (name on github: "CreeLoPer27")
 ### -C. L.
 (name on github: "trollodel")
-### -Mozzoni Paolo
-(name on github: "friedchicken")
+### -M. P.
+(name on github: friedchicken")
