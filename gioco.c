@@ -1,12 +1,16 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+
+//compatibility for Unix systems
 #if defined(__unix__)||defined(__APPLE__)
 
 	#include <unistd.h>
 	#include <termios.h>
 	#include <sys/ioctl.h>
 	#include <fcntl.h>
+
+	//to get if a key has been pressed
 	int kbhit(void)
 	{
 	  struct termios oldt, newt;
@@ -34,12 +38,14 @@
 	  return 0;
 	}
 
+	//to sleep
 	void msleep(int ms){
 		char c[20];
 		sprintf(c,"sleep %f",(float)ms/1000.0);
 		system(c);
 	}
 
+	//to create a message box
     void MsgBox(char *contenuto, char *finestra, int tipo){
         char cmd[1024];
         sprintf(cmd, "xmessage -center \"%s\"", contenuto);
@@ -50,41 +56,66 @@
         }
     }
 
+    //to get the pressed key
     char getchar2(){
         char c;
         c=getchar();
         printf("\b");
         return c;
     }
-#define getcharacter getchar2();
+
+    //to clear
     char CLEAR[]="clear";
+
+    //to get the pressed key
+    #define getcharacter getchar2();
+
+    //to resize the window
 	#define resize system("resize -s 89 47");
 
+//compatibility for Windows systems
 #elif defined(_WIN32)||defined(_WIN64)
 
     #include <Windows.h>
 
+    //to sleep
 	void msleep(int ms){
 		Sleep(ms);
 	}
+
+	//to create a message box
     void MsgBox(char *contenuto, char *finestra, int tipo){
         MessageBox(0, contenuto, finestra, tipo);
     }
 
+    //to clear
     const char CLEAR[]="cls";
 
-    #define character kbhit()
+    //to get the pressed key
     #define getcharacter getch();
+
+    //to resize the window
     #define resize system("mode con:cols=89 lines=47");
 
 #endif
 
-#define H 40
-#define B 88
+//matrix "w" --> contains the background
+#define HEIGHT 40
+#define WIDTH 88
+
+//matrix "e" --> contains all the enitities
 #define N 10
+#define P 7
+
+//NOT USED
+//-----------------------------------------------------------------
 //numero carattere asci, h, b, type, verso, velocità, dimensione.
 //types: 0-objectect 1-player 2-projectile
-#define P 7
+
+//matrix "players" --> contains the players infos
+#define P_MAX   //max number of players
+#define P_ARGS  //arguments for every player
+//-----------------------------------------------------------------
 
 //controls
 #define FORWARD1 'w'
@@ -110,8 +141,8 @@ FILE *logfile;
 
 //prototypes
 void clear(){system(CLEAR);}
-void Render(int debug,int fps,int delay,int fps_time, char w[H][B], int e[][P]);
-void winizializza(char x, char w[H][B]);
+void Render(int debug,int fps,int delay,int fps_time, char w[HEIGHT][WIDTH], int e[][P]);
+void winizializza(char x, char w[HEIGHT][WIDTH]);
 void einizializza(int x, int e[N][P]);
 int menu();
 int getday();
@@ -177,11 +208,11 @@ int getsec(){
 }
 
 //initialize matrix "world" (w)
-void winizializza(char x, char w[H][B]){
+void winizializza(char x, char w[HEIGHT][WIDTH]){
     int i,i2;
 
-    for(i=0;i<H;i++){
-        for(i2=0;i2<B;i2++){
+    for(i=0;i<HEIGHT;i++){
+        for(i2=0;i2<WIDTH;i2++){
             w[i][i2]=x;
         }
     }
@@ -191,8 +222,8 @@ void winizializza(char x, char w[H][B]){
 void einizializza(int x, int e[N][P]){
     int i,i2;
 
-    for(i=0;i<H;i++){
-        for(i2=0;i2<B;i2++){
+    for(i=0;i<HEIGHT;i++){
+        for(i2=0;i2<WIDTH;i2++){
             e[i][i2]=x;
         }
     }
@@ -203,11 +234,11 @@ int menu(){
     char daprintare2[1024];
     int cont=0,i=0;
 
-    for(i=0;i<(H-5)/2;i++){
+    for(i=0;i<(HEIGHT-5)/2;i++){
         daprintare2[cont]='\n';
         cont++;
     }
-    for(i=0;i<(B-15)/2;i++){
+    for(i=0;i<(WIDTH-15)/2;i++){
         daprintare2[cont]='\n';
         cont++;
     }
@@ -225,7 +256,7 @@ int menu(){
 //MAIN
 int main(){
     char ch;
-    char w[H][B];
+    char w[HEIGHT][WIDTH];
     int e[N][P];
     int delay=16;
     int Cstart,i=0,fps=0,fps_time;
@@ -233,7 +264,7 @@ int main(){
     int ph=-1,pb=-1;
     int W,Wc;
     int i2;
-    int h2=H-3,b2=B-6;
+    int h2=HEIGHT-3,b2=WIDTH-6;
     int ph2=-1,pb2=-1;
     int isProjectile1=0;
     int isProjectile2=0;
@@ -243,7 +274,7 @@ int main(){
     winizializza(' ', w);
     einizializza(-1 , e);
 
-    //log file
+    //create log file
     if(islog){
         int numlogfile=0;
         char nomelogfile[15];
@@ -268,7 +299,7 @@ int main(){
         fprintf(logfile, "date: %d-%d-%d", getyear(), getmonth(), getday());
     }
 
-    menu();
+    //menu();
     while(points1<10&&points2<10){
         if(i==0){
             Cstart=clock();
@@ -276,14 +307,17 @@ int main(){
         }
         else if(i==1){
             i=0;
-            //fps_time=delay + tempo per fps
+            //fps_time=delay + time for fps
             fps_time=clock()-Cstart;
             fps=1000/fps_time;
-            //fps_time=tempo per fps
+            //fps_time=time for fps
             fps_time-=delay;
         }
+
+        //if a key has been pressed
         if(kbhit()){
 
+            //take the key from the buffer and put it in "ch"
             ch = getcharacter;
 
 
@@ -314,14 +348,14 @@ int main(){
                 pb2=b2;
                 isProjectile2=1;
             }
-            if(ch=='|'){
-                menu();
-            }
+            //if(ch=='|'){
+            //    menu();
+            //}
 
         }
 
-        //gestione projectiles
-        if(pb>B)
+        //projectiles manager
+        if(pb>WIDTH)
             isProjectile1=0;
 
         if(isProjectile1==1)
@@ -341,7 +375,7 @@ int main(){
             isProjectile2=0;
         }
 
-        //gestione e rilevamento morti
+        //death manager
         if((h==ph2&&b==pb2)||(h==ph2&&b+1==pb2)){
             h=2;
             b=4;
@@ -351,14 +385,15 @@ int main(){
             pb2=-1;
         }
         if((h2==ph&&b2==pb)||(h2==ph&&b-1==pb)){
-            h2=H-3;
-            b2=B-6;
+            h2=HEIGHT-3;
+            b2=WIDTH-6;
             points1++;
             isProjectile1=0;
             ph=-1;
             pb=-1;
         }
 
+        //transfer data to the entities matrix for the rendering
         e[0][0]=88;
         e[0][1]=h;
         e[0][2]=b;
@@ -377,6 +412,7 @@ int main(){
         e[3][1]=ph2;
         e[3][2]=pb2;
 
+        //check for a winner
         if(points1>=10){
             Wc=player1;
             W=1;
@@ -386,23 +422,32 @@ int main(){
             W=2;
         }
 
+        //render the frame
         Render(1,fps ,fps_time ,delay, w, e);
+
+        //sleep 13 ms to try and get 60fps
         msleep(delay);
     }
+
+    //print the winner in the log
     printlog("game-over ",W," vince!");
     if(islog)
         fclose(logfile);
+
+    //print the winner in the messagebox
     MsgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
     return 0;
 }
 
-void Render(int debug,int fps,int fps_time,int delay, char w[H][B], int e[][P]){
-    char daPrintare[10000];
+void Render(int debug,int fps,int fps_time,int delay, char w[HEIGHT][WIDTH], int e[][P]){
+    char toPrint[10000];
     int c1,c2,c3,c4;
     int a1,a2,a3,a4;
     int d1,d2,d3,d4;
     int i,i2,i3,i4,cont=0;
-    int sfondo=0;
+    int background=0;
+
+    //generate debug infos in the frame
 
     //fps
     c1=(fps/1000-(fps/10000)*10);
@@ -423,136 +468,140 @@ void Render(int debug,int fps,int fps_time,int delay, char w[H][B], int e[][P]){
     d4=(delay/1-(delay/10)*10);
 
     //fps
-    daPrintare[cont]='f';
+    toPrint[cont]='f';
     cont++;
-    daPrintare[cont]='p';
+    toPrint[cont]='p';
     cont++;
-    daPrintare[cont]='s';
+    toPrint[cont]='s';
     cont++;
-    daPrintare[cont]=':';
+    toPrint[cont]=':';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=c1+'0';
+    toPrint[cont]=c1+'0';
     cont++;
-    daPrintare[cont]=c2+'0';
+    toPrint[cont]=c2+'0';
     cont++;
-    daPrintare[cont]=c3+'0';
+    toPrint[cont]=c3+'0';
     cont++;
-    daPrintare[cont]=c4+'0';
+    toPrint[cont]=c4+'0';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
     //fps_time
-    daPrintare[cont]='f';
+    toPrint[cont]='f';
     cont++;
-    daPrintare[cont]='p';
+    toPrint[cont]='p';
     cont++;
-    daPrintare[cont]='s';
+    toPrint[cont]='s';
     cont++;
-    daPrintare[cont]='_';
+    toPrint[cont]='_';
     cont++;
-    daPrintare[cont]='t';
+    toPrint[cont]='t';
     cont++;
-    daPrintare[cont]='i';
+    toPrint[cont]='i';
     cont++;
-    daPrintare[cont]='m';
+    toPrint[cont]='m';
     cont++;
-    daPrintare[cont]='e';
+    toPrint[cont]='e';
     cont++;
-    daPrintare[cont]=':';
+    toPrint[cont]=':';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=a1+'0';
+    toPrint[cont]=a1+'0';
     cont++;
-    daPrintare[cont]=a2+'0';
+    toPrint[cont]=a2+'0';
     cont++;
-    daPrintare[cont]=a3+'0';
+    toPrint[cont]=a3+'0';
     cont++;
-    daPrintare[cont]=a4+'0';
+    toPrint[cont]=a4+'0';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
     //delay
-    daPrintare[cont]='d';
+    toPrint[cont]='d';
     cont++;
-    daPrintare[cont]='e';
+    toPrint[cont]='e';
     cont++;
-    daPrintare[cont]='l';
+    toPrint[cont]='l';
     cont++;
-    daPrintare[cont]='a';
+    toPrint[cont]='a';
     cont++;
-    daPrintare[cont]='y';
+    toPrint[cont]='y';
     cont++;
-    daPrintare[cont]=':';
+    toPrint[cont]=':';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=d1+'0';
+    toPrint[cont]=d1+'0';
     cont++;
-    daPrintare[cont]=d2+'0';
+    toPrint[cont]=d2+'0';
     cont++;
-    daPrintare[cont]=d3+'0';
+    toPrint[cont]=d3+'0';
     cont++;
-    daPrintare[cont]=d4+'0';
+    toPrint[cont]=d4+'0';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    //punteggi
-    daPrintare[cont]=player1;
+    //points
+    toPrint[cont]=player1;
     cont++;
-    daPrintare[cont]=':';
+    toPrint[cont]=':';
     cont++;
-    daPrintare[cont]=points1+'0';
+    toPrint[cont]=points1+'0';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=' ';
+    toPrint[cont]=' ';
     cont++;
-    daPrintare[cont]=player2;
+    toPrint[cont]=player2;
     cont++;
-    daPrintare[cont]=':';
+    toPrint[cont]=':';
     cont++;
-    daPrintare[cont]=points2+'0';
+    toPrint[cont]=points2+'0';
     cont++;
-    daPrintare[cont]='\n';
+    toPrint[cont]='\n';
     cont++;
 
+    //generate the frame and put it in toPrint
+    for(i=0;i<HEIGHT;i++){
+        for(i2=0;i2<WIDTH;i2++){
+            background=1;
 
-    for(i=0;i<H;i++){
-        for(i2=0;i2<B;i2++){
-            sfondo=1;
-
-            //controllo tabella entità
-            for(i3=0;i3<N&&sfondo==1;i3++){
+            //check entity table
+            for(i3=0;i3<N&&background==1;i3++){
                 if(e[i3][1]==i&&e[i3][2]==i2){
-                    daPrintare[cont]=e[i3][0];
+                    toPrint[cont]=e[i3][0];
                     cont++;
 
-                    //larghezza 2
+                    //width 2
                     if(e[i3][3]==1){
-                        daPrintare[cont]=e[i3][0];
+                        toPrint[cont]=e[i3][0];
                         cont++;
                         i2++;
                     }
-                    sfondo=0;
+                    background=0;
                 }
             }
-            if(sfondo){
-                daPrintare[cont]=w[i][i2];
+            if(background){
+                toPrint[cont]=w[i][i2];
                 cont++;
             }
         }
-        daPrintare[cont]='\n';
+
+        toPrint[cont]='\n';
         cont++;
     }
-        daPrintare[cont]='\0';
-        printf("%s",daPrintare);
+        //set an end to the array (save time)
+        toPrint[cont]='\0';
+
+        //print the frame (toPrint)
+        printf("%s",toPrint);
 }
