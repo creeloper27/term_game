@@ -2,6 +2,8 @@
 
 This is a terminal-based shooter game that can run on both linux and windows machines.
 
+The code is complitly written in C.
+
 I'm trying to make the code as symple as possible by commenting everything, keeping the code on a single file and trying to use as few libraries as possible.
 
 If you want to try it without the need of compiling you can download the Windows_Compiled and extract it.
