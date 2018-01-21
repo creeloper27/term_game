@@ -72,6 +72,11 @@
 
     //to resize the window
 	#define resize system("resize -s 89 47");
+    void resize(int h, int b){
+        char command[50];
+        sprintf(command,"resize -s %d %d",b,h);
+        system(command);
+    }
 
 //compatibility for Windows systems
 #elif defined(_WIN32)||defined(_WIN64)
@@ -95,7 +100,14 @@
     #define getcharacter getch();
 
     //to resize the window
-    #define resize system("mode con:cols=89 lines=47");
+    void resize(int h, int b){
+        char command[50];
+        sprintf(command,"mode con:cols=%d lines=%d",b,h);
+        printf("\n\n%s\n\n",command);
+        system("pause");
+        system(command);
+        system("pause");
+    }
 
 #endif
 
@@ -254,7 +266,7 @@ int menu(){
 }
 
 //MAIN
-int main(){
+int main(int argc, char *argv[]){
     char ch;
     char w[HEIGHT][WIDTH];
     int e[N][P];
@@ -269,8 +281,23 @@ int main(){
     int isProjectile1=0;
     int isProjectile2=0;
     int contn=0;
+    int term_h,term_b;
 
-    resize;
+
+    printf("\n\n%s\n\n",argv[1]);
+    if(argc>=1&&argv[1]=="--help"){
+        printf("\nterm_game [terminal height] [terminal base]\n");
+        return 0;
+    }else if(argc>=2){
+        sscanf(argv[1], "%d", &term_h);
+        sscanf(argv[2], "%d", &term_b);
+        resize(term_h,term_b);
+    }else{
+        resize(HEIGHT+2,WIDTH+1) ;
+    }
+
+    system("pause");
+
     winizializza(' ', w);
     einizializza(-1 , e);
 
@@ -301,6 +328,8 @@ int main(){
 
     //menu();
     while(points1<10&&points2<10){
+
+
         if(i==0){
             Cstart=clock();
             i--;
