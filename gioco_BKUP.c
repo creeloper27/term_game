@@ -106,60 +106,42 @@
         printf("\n\n%s\n\n",command);
         system("pause");
         system(command);
+        system("pause");
     }
 
 #endif
 
-//matrix "world" --> contains the background
+//matrix "w" --> contains the background
 #define HEIGHT 40
 #define WIDTH 88
 
-//array "entity" --> contains all the enitities
-#define ENTITY_MAX 10
+//matrix "e" --> contains all the enitities
+#define N 10
+#define P 7
 
-//array "player" --> contains all the players
-#define PLAYER_MAX 10
 
-//array "projectile" --> contains all the projectiles
-#define PROJECTILE_MAX 10
+//NOT USED
+//-----------------------------------------------------------------
+//numero carattere asci, h, b, type, verso, velocità, dimensione.
+//types: 0-objectect 1-player 2-projectile
 
-//struct entity for rendering (contains all infos and all entities)
-typedef struct{
-    int h;
-    int b;
-    char ascii;     //ascii character
-    int dim;        //size on projectile
-    int direction;  //direction
-    int speed;      //speed
-    int is;         //is it active?
-    int points;     //points earned
-    int type;       //0-player 1-projectile -1-none
-}entity_all;
+//matrix "players" --> contains the players infos
+#define P_MAX   //max number of players
+#define P_ARGS  //arguments for every player
+//-----------------------------------------------------------------
 
-//struct players contains just needed infos
-typedef struct{
-    int h;
-    int b;
-    char name[10];  //player name
-    char ascii;     //ascii character
-    char top;       //go-top key
-    char bottom;    //go-bottom key
-    char left;      //go-left key
-    char right;     //go-right key
-    char fire;      //fire key
-    int is;         //is it active?
-}entity_player;
+//controls
+#define FORWARD1 'w'
+#define BACKWARD1 's'
+#define LEFT1 'a'
+#define RIGHT1 'd'
+#define FIRE1 'e'
 
-//struct players contains just needed infos
-typedef struct{
-    int h;
-    int b;
-    char ascii;     //ascii character
-    int dim;        //size on projectile
-    int direction;  //direction
-    int speed;      //speed
-    int is;         //is it active?
-}entity_projectile;
+#define FORWARD2 'i'
+#define BACKWARD2 'k'
+#define LEFT2 'j'
+#define RIGHT2 'l'
+#define FIRE2 'o'
 
 //global variables
 int points1=0;
@@ -172,9 +154,9 @@ FILE *logfile;
 
 //prototypes
 void clear(){system(CLEAR);}
-void Render(int debug,int fps,int delay,int fps_time, char w[HEIGHT][WIDTH], int entity[]);
-void winizializza(char x, char world[HEIGHT][WIDTH]);
-void einizializza(int entity[]);
+void Render(int debug,int fps,int delay,int fps_time, char w[HEIGHT][WIDTH], int e[][P]);
+void winizializza(char x, char w[HEIGHT][WIDTH]);
+void einizializza(int x, int e[N][P]);
 int menu();
 int getday();
 int getmonth();
@@ -238,33 +220,27 @@ int getsec(){
     return tm.tm_sec;
 }
 
-//initialize matrix "world"
-void winizializza(char x, char world[HEIGHT][WIDTH]){
+//initialize matrix "world" (w)
+void winizializza(char x, char w[HEIGHT][WIDTH]){
     int i,i2;
 
     for(i=0;i<HEIGHT;i++){
         for(i2=0;i2<WIDTH;i2++){
-            world[i][i2]=x;
+            w[i][i2]=x;
         }
     }
 }
 
-//initialize array "entity"
-void einizializza(int entity[]){
+//initialize matrix "entity" (e)
+void einizializza(int x, int e[N][P]){
     int i,i2;
 
-    for(i=0;i<ENTITY_MAX;i++){
-        entity[i].h=-1;
-        entity[i].b=-1;
-        entity[i].ascii=' ';
-        entity[i].dim=0;
-        entity[i].direction=-1;
-        entity[i].speed=0;
-        entity[i].is=0;
+    for(i=0;i<HEIGHT;i++){
+        for(i2=0;i2<WIDTH;i2++){
+            e[i][i2]=x;
+        }
     }
 }
-
-
 
 //main menu
 int menu(){
@@ -294,9 +270,7 @@ int menu(){
 int main(int argc, char *argv[]){
     char ch;
     char w[HEIGHT][WIDTH];
-    entity_all          entity[ENTITY_MAX];
-    entity_player       player[PLAYER_MAX];
-    entity_projectile   projectile[PROJECTILE_MAX];
+    int e[N][P];
     int delay=16;
     int Cstart,i=0,fps=0,fps_time;
     int h=2,b=4;
@@ -310,48 +284,9 @@ int main(int argc, char *argv[]){
     int contn=0;
     int term_h,term_b;
 
-    player[0].is=1;
-    player[0].name="player 1";
-    player[0].ascii=88;
-    player[0].fire='e';
-    player[0].top='w';
-    player[0].bottom='s';
-    player[0].right='d';
-    player[0].left='a';
-
-    player[1].is=1;
-    player[1].name="player 2";
-    player[1].ascii=89;
-    player[1].fire='o';
-    player[1].top='w';
-    player[1].bottom='k';
-    player[1].right='l';
-    player[1].left='j';
-
-    projectile[0].is=0;
-    projectile[0].ascii=60;
-    projectile[0].speed=1;
-    projectile[0].direction=-1;
-
-    projectile[1].is=0;
-    projectile[1].ascii=61;
-    projectile[1].speed=1;
-    projectile[1].direction=-1;
-
-    entity[0]=player[0];
-    entity[0].type=0;
-
-    entity[1]=player[1];
-    entity[1].type=0;
-
-    entity[2]=projectile[0];
-    entity[2].type=1;
-
-    entity[3]=projectile[1];
-    entity[3].type=1;
 
     printf("\n\n%s\n\n",argv[1]);
-    if(argc>=1&&(const char *)argv[1]=="--help"){
+    if(argc>=1&&argv[1]=="--help"){
         printf("\nterm_game [terminal height] [terminal base]\n");
         return 0;
     }else if(argc>=2){
@@ -364,8 +299,8 @@ int main(int argc, char *argv[]){
 
     system("pause");
 
-    winizializza(' ', world);
-    einizializza(entity);
+    winizializza(' ', w);
+    einizializza(-1 , e);
 
     //create log file
     if(islog){
@@ -392,8 +327,6 @@ int main(int argc, char *argv[]){
         fprintf(logfile, "date: %d-%d-%d", getyear(), getmonth(), getday());
     }
 
-    entity[0]=player[0];
-    entity[1]=
     //menu();
     while(points1<10&&points2<10){
 
@@ -491,8 +424,6 @@ int main(int argc, char *argv[]){
         }
 
         //transfer data to the entities matrix for the rendering
-        entity[0]
-
         e[0][0]=88;
         e[0][1]=h;
         e[0][2]=b;
