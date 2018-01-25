@@ -103,8 +103,10 @@
     void resize(int h, int b){
         char command[50];
         sprintf(command,"mode con:cols=%d lines=%d",b,h);
+        //start debug
         printf("\n\n%s\n\n",command);
         system("pause");
+        //end debug
         system(command);
     }
 
@@ -114,40 +116,52 @@
 #define HEIGHT 40
 #define WIDTH 88
 
-//array "entity" --> contains all the enitities
-#define ENTITY_MAX 10
+//array "entity_other" --> contains entities that aren't projectiles or players
+#define OTHER_ENTITY_MAX 10
 
-//array "player" --> contains all the players
+//array "player" --> contains the players
 #define PLAYER_MAX 10
 
-//array "projectile" --> contains all the projectiles
+//array "projectile" --> contains the projectiles
 #define PROJECTILE_MAX 10
 
-//struct entity for rendering (contains all infos and all entities)
+//struct entity_other (contains all types of infos, it is used for other types of entities)
 typedef struct{
+    int is;         //is it active?
     int h;
     int b;
     char ascii;     //ascii character
     int dim;        //size on projectile
     int direction;  //direction
     int speed;      //speed
-    int is;         //is it active?
     int points;     //points earned
-    int type;       //0-player 1-projectile -1-none
-}entity_all;
 
-//struct players contains just needed infos
-typedef struct{
-    int h;
-    int b;
-    char name[10];  //player name
-    char ascii;     //ascii character
+    //name
+    char name[10];  //name
+
+    //controls, -1 if it hasn't one
     char top;       //go-top key
     char bottom;    //go-bottom key
     char left;      //go-left key
     char right;     //go-right key
     char fire;      //fire key
-    int is;         //is it active?
+
+}entity_other;
+
+//struct players contains just needed infos
+typedef struct{
+    int h;
+    int b;
+    char name[15];          //player name
+    char ascii;             //ascii character
+    char ascii_projectile;  //ascii of the projectile
+    int direction;          //which way is he facing? 0-top 1-right 2-bottom 3-left
+    char top;               //go-top key
+    char bottom;            //go-bottom key
+    char left;              //go-left key
+    char right;             //go-right key
+    char fire;              //fire key
+    int is;                 //is it active?
 }entity_player;
 
 //struct players contains just needed infos
@@ -166,15 +180,19 @@ int points1=0;
 int points2=0;
 int player1=88;
 int player2=79;
-int islog=1;
+int islog=0;
 int isrender=1;
+int player_number=2;
+int projectile_number=0;
 FILE *logfile;
+entity_other other[OTHER_ENTITY_MAX];
+entity_player player[PLAYER_MAX];
+entity_projectile projectile[PROJECTILE_MAX];
 
 //prototypes
 void clear(){system(CLEAR);}
-void Render(int debug,int fps,int delay,int fps_time, char w[HEIGHT][WIDTH], int entity[]);
+void Render(int debug,int fps,int delay,int fps_time, char w[HEIGHT][WIDTH], entity_other other[], entity_player player[], entity_projectile projectile[]);
 void winizializza(char x, char world[HEIGHT][WIDTH]);
-void einizializza(int entity[]);
 int menu();
 int getday();
 int getmonth();
@@ -184,6 +202,9 @@ int getmin();
 int getsec();
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo);
 void printlog(char a[], int b, char c[]);
+void tick();
+void checkmovement(char ch, entity_player p);
+void fire(entity_player p);
 
 //message box
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
@@ -249,23 +270,6 @@ void winizializza(char x, char world[HEIGHT][WIDTH]){
     }
 }
 
-//initialize array "entity"
-void einizializza(int entity[]){
-    int i,i2;
-
-    for(i=0;i<ENTITY_MAX;i++){
-        entity[i].h=-1;
-        entity[i].b=-1;
-        entity[i].ascii=' ';
-        entity[i].dim=0;
-        entity[i].direction=-1;
-        entity[i].speed=0;
-        entity[i].is=0;
-    }
-}
-
-
-
 //main menu
 int menu(){
     char daprintare2[1024];
@@ -290,13 +294,54 @@ int menu(){
     return 0;
 }
 
+//tick
+void tick(){
+    char ch;
+    int i;
+    //check for controls matches (if keys have been pressed)
+    if(kbhit()){
+        //take the key from the buffer and put it in "ch"
+        ch = getcharacter;
+        for(i=0;i<player_number;i--){
+            checkmovement(ch, player[i]);
+        }
+    }
+    //MOVE BULLETS ETC...
+}
+
+//nel caso in cui non viene modificato l'originale, utilizzare un puntatore al player nell'array
+void checkmovement(char ch, entity_player p){
+    if(ch==p.top){
+        //l'if è su un'altra riga per evitare di controllare tutte le condizioni
+        if(p.h>1){p.h--;p.direction=0;}
+    }else if(ch==p.bottom){
+        if(p.h<HEIGHT-1) {p.h++;p.direction=2;}
+    }else if(ch==p.left){
+        if(p.b>1) {p.b--;p.direction=3;}
+    }else if(ch==p.right){
+        if(p.b<WIDTH-1) {p.b++;p.direction=1;}
+    }else if(ch==p.fire){
+        //dentro fire devo controllare il verso e creare un projectile con il carattere il verso e la velocità adeguati
+        fire(p);
+    }
+}
+
+//create a projectile with the player infos (witch
+void fire(entity_player p){
+    projectile_number++;
+
+    projectile[projectile_number].h=p.h;
+    projectile[projectile_number].b=p.b;
+    projectile[projectile_number].ascii=p.ascii_projectile;
+    projectile[projectile_number].direction=p.direction;
+    projectile[projectile_number].speed=1;
+
+}
+
 //MAIN
 int main(int argc, char *argv[]){
     char ch;
-    char w[HEIGHT][WIDTH];
-    entity_all          entity[ENTITY_MAX];
-    entity_player       player[PLAYER_MAX];
-    entity_projectile   projectile[PROJECTILE_MAX];
+    char world[HEIGHT][WIDTH];
     int delay=16;
     int Cstart,i=0,fps=0,fps_time;
     int h=2,b=4;
@@ -310,9 +355,14 @@ int main(int argc, char *argv[]){
     int contn=0;
     int term_h,term_b;
 
+    //menu for setting up players, controls etc
+    //to asign strings, use strcpy() because you can't directly asign
     player[0].is=1;
-    player[0].name="player 1";
+    strcpy(player[0].name,"player 1");
     player[0].ascii=88;
+    player[0].h=2;
+    player[0].b=4;
+    player[0].ascii_projectile=30;
     player[0].fire='e';
     player[0].top='w';
     player[0].bottom='s';
@@ -320,36 +370,23 @@ int main(int argc, char *argv[]){
     player[0].left='a';
 
     player[1].is=1;
-    player[1].name="player 2";
+    strcpy(player[1].name,"player 2");
     player[1].ascii=89;
+    player[0].h=HEIGHT-2;
+    player[0].b=WIDTH-4;
+    player[0].ascii_projectile=31;
     player[1].fire='o';
     player[1].top='w';
     player[1].bottom='k';
     player[1].right='l';
     player[1].left='j';
 
-    projectile[0].is=0;
-    projectile[0].ascii=60;
-    projectile[0].speed=1;
-    projectile[0].direction=-1;
+    //entity conterrà entità che non sono ne giocatori ne proiettili, verrà utilizzato nel futuro
+    //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
+    //every time a player shoots create a struct on the projectile array
+    //create function moveleft() moveright() fire().... etc
 
-    projectile[1].is=0;
-    projectile[1].ascii=61;
-    projectile[1].speed=1;
-    projectile[1].direction=-1;
-
-    entity[0]=player[0];
-    entity[0].type=0;
-
-    entity[1]=player[1];
-    entity[1].type=0;
-
-    entity[2]=projectile[0];
-    entity[2].type=1;
-
-    entity[3]=projectile[1];
-    entity[3].type=1;
-
+    //resize window
     printf("\n\n%s\n\n",argv[1]);
     if(argc>=1&&(const char *)argv[1]=="--help"){
         printf("\nterm_game [terminal height] [terminal base]\n");
@@ -361,11 +398,6 @@ int main(int argc, char *argv[]){
     }else{
         resize(HEIGHT+2,WIDTH+1) ;
     }
-
-    system("pause");
-
-    winizializza(' ', world);
-    einizializza(entity);
 
     //create log file
     if(islog){
@@ -392,15 +424,15 @@ int main(int argc, char *argv[]){
         fprintf(logfile, "date: %d-%d-%d", getyear(), getmonth(), getday());
     }
 
-    entity[0]=player[0];
-    entity[1]=
-    //menu();
-    while(points1<10&&points2<10){
+    //inizializza background
+    winizializza(' ', world);
+    i=0;
 
+    while(points1<10&&points2<10){
 
         if(i==0){
             Cstart=clock();
-            i--;
+            i++;
         }
         else if(i==1){
             i=0;
@@ -411,46 +443,16 @@ int main(int argc, char *argv[]){
             fps_time-=delay;
         }
 
-        //if a key has been pressed
-        if(kbhit()){
-
-            //take the key from the buffer and put it in "ch"
-            ch = getcharacter;
-
-
-            if(ch==FORWARD1)
-                h--;
-            else if(ch==RIGHT1)
-                b+=2;
-            else if(ch==BACKWARD1)
-                h++;
-            else if(ch==LEFT1)
-                b-=2;
-            else if(ch==FIRE1){
-                ph=h;
-                pb=b;
-                isProjectile1=1;
-            }
-
-            if(ch==FORWARD2)
-                h2--;
-            else if(ch==RIGHT2)
-                b2+=2;
-            else if(ch==BACKWARD2)
-                h2++;
-            else if(ch==LEFT2)
-                b2-=2;
-            else if(ch==FIRE2){
-                ph2=h2;
-                pb2=b2;
-                isProjectile2=1;
-            }
-            //if(ch=='|'){
-            //    menu();
-            //}
+        tick();
+            //struttura
+            /*
+            dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
+            movetop(player number) -> controlla se può muversi in quella direzione o no
+            /*
 
         }
 
+        //VECCHIA STRUTTURA
         //projectiles manager
         if(pb>WIDTH)
             isProjectile1=0;
@@ -490,27 +492,6 @@ int main(int argc, char *argv[]){
             pb=-1;
         }
 
-        //transfer data to the entities matrix for the rendering
-        entity[0]
-
-        e[0][0]=88;
-        e[0][1]=h;
-        e[0][2]=b;
-        e[0][3]=1;
-
-        e[1][0]=45;
-        e[1][1]=ph;
-        e[1][2]=pb;
-
-        e[2][0]=79;
-        e[2][1]=h2;
-        e[2][2]=b2;
-        e[2][3]=1;
-
-        e[3][0]=43;
-        e[3][1]=ph2;
-        e[3][2]=pb2;
-
         //check for a winner
         if(points1>=10){
             Wc=player1;
@@ -520,9 +501,10 @@ int main(int argc, char *argv[]){
             Wc=player2;
             W=2;
         }
+        */
 
         //render the frame
-        Render(1,fps ,fps_time ,delay, w, e);
+        Render(1,fps ,fps_time ,delay, world, other, player, projectile);
 
         //sleep 13 ms to try and get 60fps
         msleep(delay);
@@ -538,7 +520,7 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void Render(int debug,int fps,int fps_time,int delay, char w[HEIGHT][WIDTH], int e[][P]){
+void Render(int debug,int fps,int fps_time,int delay, char w[HEIGHT][WIDTH], entity_other other[], entity_player player[], entity_projectile projectile[]){
     char toPrint[10000];
     int c1,c2,c3,c4;
     int a1,a2,a3,a4;
@@ -674,21 +656,38 @@ void Render(int debug,int fps,int fps_time,int delay, char w[HEIGHT][WIDTH], int
         for(i2=0;i2<WIDTH;i2++){
             background=1;
 
-            //check entity table
-            for(i3=0;i3<N&&background==1;i3++){
-                if(e[i3][1]==i&&e[i3][2]==i2){
-                    toPrint[cont]=e[i3][0];
+            //check the 3 arrays other player projectile
+
+            //players
+            for(i3=0;i3<PLAYER_MAX&&background==1;i3++){
+                if(player[i3].h==i&&player[i3].b==i2){
+                    toPrint[cont]=player[i3].ascii;
                     cont++;
 
-                    //width 2
-                    if(e[i3][3]==1){
-                        toPrint[cont]=e[i3][0];
-                        cont++;
-                        i2++;
-                    }
                     background=0;
                 }
             }
+
+            //projectiles
+            for(i3=0;i3<PROJECTILE_MAX&&background==1;i3++){
+                if(projectile[i3].h==i&&projectile[i3].b==i2){
+                    toPrint[cont]=projectile[i3].ascii;
+                    cont++;
+
+                    background=0;
+                }
+            }
+
+            //other entities
+            for(i3=0;i3<OTHER_ENTITY_MAX&&background==1;i3++){
+                if(other[i3].h==i&&other[i3].b==i2){
+                    toPrint[cont]=other[i3].ascii;
+                    cont++;
+
+                    background=0;
+                }
+            }
+
             if(background){
                 toPrint[cont]=w[i][i2];
                 cont++;
@@ -703,4 +702,5 @@ void Render(int debug,int fps,int fps_time,int delay, char w[HEIGHT][WIDTH], int
 
         //print the frame (toPrint)
         printf("%s",toPrint);
+
 }
