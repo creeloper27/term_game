@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 
 //compatibility for Unix systems
 #if defined(__unix__)||defined(__APPLE__)
@@ -46,7 +47,7 @@
 	}
 
 	//to create a message box
-    void MsgBox(char *contenuto, char *finestra, int tipo){
+    	void MsgBox(char *contenuto, char *finestra, int tipo){
         char cmd[1024];
         sprintf(cmd, "xmessage -center \"%s\"", contenuto);
         if(fork()==0){
@@ -71,7 +72,6 @@
     #define getcharacter getchar2();
 
     //to resize the window
-	#define resize system("resize -s 89 47");
     void resize(int h, int b){
         char command[50];
         sprintf(command,"resize -s %d %d",b,h);
@@ -204,7 +204,7 @@ int getsec();
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo);
 void printlog(char a[], int b, char c[]);
 void tick();
-void checkmovement(char ch, int p);
+int checkmovement(char ch, int p);
 void fire(int p);
 void physics();
 void sort_projectiles();
@@ -300,32 +300,40 @@ int menu(){
 //tick
 void tick(){
     char ch;
-    int i;
+    int i,flag=1;
     //check for controls matches (if keys have been pressed)
     if(kbhit()){
         //take the key from the buffer and put it in "ch"
         ch = getcharacter;
-        for(i=0;i<player_number;i++){
-            checkmovement(ch, i);
+        for(i=0;i<player_number&&flag;i++){
+            if(checkmovement(ch, i)){
+                    flag=0;    //exit if there is a mach
+            }
         }
     }
     physics();
-    //MOVE BULLETS ETC...
 }
 
 //controlla le corrispondenze con i tasti
-void checkmovement(char ch, int p){
+int checkmovement(char ch, int p){
     if(ch==player[p].top){
-        //l'if è su un'altra riga per evitare di controllare tutte le condizioni
-        if(player[p].h>1){player[p].h--;player[p].direction=0;printf("\n\n\n");}
+        //l'if ï¿½ su un'altra riga per evitare di controllare tutte le condizioni
+        if(player[p].h>1){player[p].h--;player[p].direction=0;}
+        return 1;
     }else if(ch==player[p].bottom){
         if(player[p].h<HEIGHT-1) {player[p].h++;player[p].direction=2;}
+        return 1;
     }else if(ch==player[p].left){
         if(player[p].b>1) {player[p].b-=2;player[p].direction=3;}
+        return 1;
     }else if(ch==player[p].right){
         if(player[p].b<WIDTH-1) {player[p].b+=2;player[p].direction=1;}
+        return 1;
     }else if(ch==player[p].fire){
         fire(p);
+        return 1;
+    }else{
+        return 0;
     }
 }
 
@@ -353,13 +361,13 @@ void physics(){
     for(i=0;i<projectile_number;i++){
         switch (projectile[i].direction){
             case 0:
-                projectile[i].h++;
+                projectile[i].h--;
                 break;
             case 1:
                 projectile[i].b+=2;
                 break;
             case 2:
-                projectile[i].h--;
+                projectile[i].h++;
                 break;
             case 3:
                 projectile[i].b-=2;
@@ -370,47 +378,51 @@ void physics(){
 
 //delete the projectiles with is=0 from the array
 void sort_projectiles(){
-    int sortered=1,i=0,i2=0;
-    for(i=0;i<projectile_number;i++){
+    //int sortered=1,i=0,i2=0;
+
+    //projectile[] ï¿½ l'array di strutture entity_projectile
+    //devo rimuovere dall'array gli elementi che hanno .is=0 e diminuire projectile_number del rispettivo numero di elementi eliminati
+    //e "portare indietro l'array" ES: 11011 p_n=5 -> 1111 p_n=4
+
+
+
+
+    /*for(i=0;i<projectile_number;i++){
         if(projectile[i].is==0) sortered=0;
     }
     //sort the array
-    //RIFARE SORTING ARRAY <-----------------------------------------------------
     while(sortered==0){
-            //i'm actually surprised by myself, i didn't know that i could create such a bad sorting algoritm :D
-//        for(i=0;i<projectile_number-1;i++){
-//            if(projectile[i].is==0){
-//                projectile[i]=projectile[i+1];
-//                projectile_number--;
-//                for(i2=i;i2<projectile_number-1;i2++){
-//                    projectile[i]=projectile[i+1];
-//                }
-//            }
-//        }
+        for(i=0;i<projectile_number;i++){
+            printf("\nprojectile[%d].is=%d",i,projectile[i].is);
+        }
+        printf("\nwhile");
+        if(projectile_number==1){
+            projectile_number--;
+        }else{
+            for(i2=i;i2<projectile_number-1;i2++){
+                projectile[i2]=projectile[i2+1];
+                printf("\nprimo for");
+                system("pause");
+            }
+            projectile_number--;
+        }
+
+
         sortered=1;
         for(i=0;i<projectile_number;i++){
             if(projectile[i].is==0){
                 sortered=0;
             }
+            printf("\nfor di verifica");
         }
-    }
+    }*/
 }
 
 //MAIN
 int main(int argc, char *argv[]){
-    char ch;
     char world[HEIGHT][WIDTH];
     int delay=16;
     int Cstart,i=0,fps=0,fps_time;
-    int h=2,b=4;
-    int ph=-1,pb=-1;
-    int W,Wc;
-    int i2;
-    int h2=HEIGHT-3,b2=WIDTH-6;
-    int ph2=-1,pb2=-1;
-    int isProjectile1=0;
-    int isProjectile2=0;
-    int contn=0;
     int term_h,term_b;
 
     //menu for setting up players, controls etc
@@ -434,30 +446,35 @@ int main(int argc, char *argv[]){
     player[1].b=WIDTH-4;
     player[1].ascii_projectile=45;
     player[1].fire='o';
-    player[1].top='w';
+    player[1].top='i';
     player[1].bottom='k';
     player[1].right='l';
     player[1].left='j';
 
-    //entity conterrà entità che non sono ne giocatori ne proiettili, verrà utilizzato nel futuro
+    //entity conterrï¿½ entitï¿½ che non sono ne giocatori ne proiettili, verrï¿½ utilizzato nel futuro
     //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
     //every time a player shoots create a struct on the projectile array
     //create function moveleft() moveright() fire().... etc
 
 
 
+    argc--; //by default it starts from 1 (0 is the program name) , by decresing it by 1 it starts from 0
+    printf("\nargomenti: %d",argc);
 
     //resize window
-    printf("\n\n%s\n\n",argv[1]);
-    if(argc>=1&&(const char *)argv[1]=="--help"){
+    if(argc>=2){
+        printf("\n\n%s\n%s\n\n",argv[1],argv[2]);
+    }
+
+    if(argc==1&&!strcmp(argv[1],"--help")){
         printf("\nterm_game [terminal height] [terminal base]\n");
         return 0;
-    }else if(argc>=2){
+    }else if(argc==2){
         sscanf(argv[1], "%d", &term_h);
         sscanf(argv[2], "%d", &term_b);
         resize(term_h,term_b);
     }else{
-        resize(HEIGHT+2,WIDTH+1) ;
+        resize(HEIGHT+2,WIDTH+1);
     }
 
 
@@ -509,13 +526,14 @@ int main(int argc, char *argv[]){
             //struttura
             /*
             dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
-            movetop(player number) -> controlla se può muversi in quella direzione o no
-            /*
+            movetop(player number) -> controlla se puï¿½ muversi in quella direzione o no
+            */
 
-        }
+
 
         //VECCHIA STRUTTURA
         //projectiles manager
+/*
         if(pb>WIDTH)
             isProjectile1=0;
 
@@ -573,12 +591,12 @@ int main(int argc, char *argv[]){
     }
 
     //print the winner in the log
-    printlog("game-over ",W," vince!");
+    //printlog("game-over ",W," vince!");
     if(islog)
         fclose(logfile);
 
     //print the winner in the messagebox
-    MsgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
+    //msgBoxv("iL VINCITORE ï¿½: ",Wc,"GAME OVER",1);
     return 0;
 }
 
@@ -587,7 +605,7 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
     int c1,c2,c3,c4;
     int a1,a2,a3,a4;
     int d1,d2,d3,d4;
-    int i,i2,i3,i4,cont=0;
+    int i,i2,i3,cont=0;
     int background=0;
 
     //generate debug infos in the frame
