@@ -184,7 +184,7 @@ int islog=0;
 int isrender=1;
 int other_number=0;
 int player_number=2;
-int projectile_number=-1;
+int projectile_number=0;
 FILE *logfile;
 entity_other other[OTHER_ENTITY_MAX];
 entity_player player[PLAYER_MAX];
@@ -208,6 +208,7 @@ int checkmovement(char ch, int p);
 void fire(int p);
 void physics();
 void sort_projectiles();
+void atp(int *cont, char toPrint[], char c[]);
 
 //message box
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
@@ -317,20 +318,21 @@ void tick(){
 //controlla le corrispondenze con i tasti
 int checkmovement(char ch, int p){
     if(ch==player[p].top){
-        //l'if � su un'altra riga per evitare di controllare tutte le condizioni
+        //l'if è su un'altra riga per evitare di controllare tutte le condizioni
         if(player[p].h>1){player[p].h--;player[p].direction=0;}
         return 1;
     }else if(ch==player[p].bottom){
         if(player[p].h<HEIGHT-1) {player[p].h++;player[p].direction=2;}
         return 1;
     }else if(ch==player[p].left){
-        if(player[p].b>1) {player[p].b-=2;player[p].direction=3;}
+        if(player[p].b>2) {player[p].b-=2;player[p].direction=3;}
         return 1;
     }else if(ch==player[p].right){
-        if(player[p].b<WIDTH-1) {player[p].b+=2;player[p].direction=1;}
+        if(player[p].b<WIDTH-2) {player[p].b+=2;player[p].direction=1;}
         return 1;
     }else if(ch==player[p].fire){
-        fire(p);
+        if(projectile_number<10)
+            fire(p);
         return 1;
     }else{
         return 0;
@@ -341,12 +343,12 @@ int checkmovement(char ch, int p){
 void fire(int p){
     projectile_number++;
 
-    projectile[projectile_number].h=player[p].h;
-    projectile[projectile_number].b=player[p].b;
-    projectile[projectile_number].ascii=player[p].ascii_projectile;
-    projectile[projectile_number].direction=player[p].direction;
-    projectile[projectile_number].speed=1;
-    projectile[projectile_number].is=1;     //when the projectile goes off screen or hit something, is is set to 0 and the projectile is removed from the array
+    projectile[projectile_number-1].h=player[p].h;
+    projectile[projectile_number-1].b=player[p].b;
+    projectile[projectile_number-1].ascii=player[p].ascii_projectile;
+    projectile[projectile_number-1].direction=player[p].direction;
+    projectile[projectile_number-1].speed=1;
+    projectile[projectile_number-1].is=1;     //when the projectile goes off screen or hit something, .is is set to 0 and the projectile is removed from the projectile array
 
 }
 
@@ -354,8 +356,10 @@ void fire(int p){
 void physics(){
     int i;
     for(i=0;i<projectile_number;i++){
-        if(projectile[i].h>HEIGHT||projectile[i].b>WIDTH||projectile[i].h<0||projectile[i].b<0)
+        if(projectile[i].h>HEIGHT||projectile[i].b>WIDTH||projectile[i].h<0||projectile[i].b<0){
             projectile[i].is=0;
+        }
+
     }
     sort_projectiles();     //delete the projectiles with is=0 from the array
     for(i=0;i<projectile_number;i++){
@@ -378,7 +382,7 @@ void physics(){
 
 //delete the projectiles with is=0 from the array
 void sort_projectiles(){
-    //int sortered=1,i=0,i2=0;
+    int sortered=1,i=0,i2=0;
 
     //projectile[] � l'array di strutture entity_projectile
     //devo rimuovere dall'array gli elementi che hanno .is=0 e diminuire projectile_number del rispettivo numero di elementi eliminati
@@ -386,36 +390,28 @@ void sort_projectiles(){
 
 
 
-
-    /*for(i=0;i<projectile_number;i++){
+    for(i=0;i<projectile_number;i++){
         if(projectile[i].is==0) sortered=0;
     }
+
     //sort the array
     while(sortered==0){
-        for(i=0;i<projectile_number;i++){
-            printf("\nprojectile[%d].is=%d",i,projectile[i].is);
-        }
-        printf("\nwhile");
         if(projectile_number==1){
             projectile_number--;
         }else{
             for(i2=i;i2<projectile_number-1;i2++){
                 projectile[i2]=projectile[i2+1];
-                printf("\nprimo for");
-                system("pause");
             }
             projectile_number--;
         }
-
 
         sortered=1;
         for(i=0;i<projectile_number;i++){
             if(projectile[i].is==0){
                 sortered=0;
             }
-            printf("\nfor di verifica");
         }
-    }*/
+    }
 }
 
 //MAIN
@@ -474,7 +470,7 @@ int main(int argc, char *argv[]){
         sscanf(argv[2], "%d", &term_b);
         resize(term_h,term_b);
     }else{
-        resize(HEIGHT+2,WIDTH+1);
+        resize(HEIGHT+5,WIDTH+1);
     }
 
 
@@ -523,37 +519,14 @@ int main(int argc, char *argv[]){
 
         tick();
 
-            //struttura
-            /*
-            dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
-            movetop(player number) -> controlla se pu� muversi in quella direzione o no
-            */
-
-
+        //struttura
+        /*
+        dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
+        movetop(player number) -> controlla se pu� muversi in quella direzione o no
+        */
 
         //VECCHIA STRUTTURA
-        //projectiles manager
 /*
-        if(pb>WIDTH)
-            isProjectile1=0;
-
-        if(isProjectile1==1)
-            pb+=2;
-
-        if(pb2<0)
-            isProjectile2=0;
-
-        if(isProjectile2==1)
-            pb2-=2;
-        if(pb==pb2&&ph==ph2){
-            ph=-1;
-            pb=-1;
-            ph2=-1;
-            pb2=-1;
-            isProjectile1=0;
-            isProjectile2=0;
-        }
-
         //death manager
         if((h==ph2&&b==pb2)||(h==ph2&&b+1==pb2)){
             h=2;
@@ -596,140 +569,34 @@ int main(int argc, char *argv[]){
         fclose(logfile);
 
     //print the winner in the messagebox
-    //msgBoxv("iL VINCITORE �: ",Wc,"GAME OVER",1);
+    //msgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
     return 0;
+}
+
+//Add To (to)Print
+void atp(int *cont, char toPrint[], char c[]){
+    int i;
+    for(i=0;i<strlen(c)-1;i++){
+        toPrint[*cont]=c[i];
+        *cont=*cont+1;
+    }
 }
 
 void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH], entity_other other[], int other_number, entity_player player[], int player_number, entity_projectile projectile[], int projectile_number){
     char toPrint[10000];
-    int c1,c2,c3,c4;
-    int a1,a2,a3,a4;
-    int d1,d2,d3,d4;
+    char temp[150];
     int i,i2,i3,cont=0;
     int background=0;
 
     //generate debug infos in the frame
-
-    //fps
-    c1=(fps/1000-(fps/10000)*10);
-    c2=(fps/100-(fps/1000)*10);
-    c3=(fps/10-(fps/100)*10);
-    c4=(fps/1-(fps/10)*10);
-
-    //fps_time
-    a1=(fps_time/1000-(fps_time/10000)*10);
-    a2=(fps_time/100-(fps_time/1000)*10);
-    a3=(fps_time/10-(fps_time/100)*10);
-    a4=(fps_time/1-(fps_time/10)*10);
-
-    //delay
-    d1=(delay/1000-(delay/10000)*10);
-    d2=(delay/100-(delay/1000)*10);
-    d3=(delay/10-(delay/100)*10);
-    d4=(delay/1-(delay/10)*10);
-
-    //fps
-    toPrint[cont]='f';
-    cont++;
-    toPrint[cont]='p';
-    cont++;
-    toPrint[cont]='s';
-    cont++;
-    toPrint[cont]=':';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=c1+'0';
-    cont++;
-    toPrint[cont]=c2+'0';
-    cont++;
-    toPrint[cont]=c3+'0';
-    cont++;
-    toPrint[cont]=c4+'0';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    //fps_time
-    toPrint[cont]='f';
-    cont++;
-    toPrint[cont]='p';
-    cont++;
-    toPrint[cont]='s';
-    cont++;
-    toPrint[cont]='_';
-    cont++;
-    toPrint[cont]='t';
-    cont++;
-    toPrint[cont]='i';
-    cont++;
-    toPrint[cont]='m';
-    cont++;
-    toPrint[cont]='e';
-    cont++;
-    toPrint[cont]=':';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=a1+'0';
-    cont++;
-    toPrint[cont]=a2+'0';
-    cont++;
-    toPrint[cont]=a3+'0';
-    cont++;
-    toPrint[cont]=a4+'0';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    //delay
-    toPrint[cont]='d';
-    cont++;
-    toPrint[cont]='e';
-    cont++;
-    toPrint[cont]='l';
-    cont++;
-    toPrint[cont]='a';
-    cont++;
-    toPrint[cont]='y';
-    cont++;
-    toPrint[cont]=':';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=d1+'0';
-    cont++;
-    toPrint[cont]=d2+'0';
-    cont++;
-    toPrint[cont]=d3+'0';
-    cont++;
-    toPrint[cont]=d4+'0';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    //points
-    toPrint[cont]=player1;
-    cont++;
-    toPrint[cont]=':';
-    cont++;
-    toPrint[cont]=points1+'0';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=' ';
-    cont++;
-    toPrint[cont]=player2;
-    cont++;
-    toPrint[cont]=':';
-    cont++;
-    toPrint[cont]=points2+'0';
-    cont++;
-    toPrint[cont]='\n';
-    cont++;
+    if(debug){
+        sprintf(temp,"fps: %d\nfps_time: %d delay: %d\nPOINTS: use percentS and generate it outside according to the players number\nprojectile_number: %d\n",fps,fps_time,delay,projectile_number);
+        atp(&cont,toPrint,temp);
+        for(i=0;i<projectile_number;i++){
+            sprintf(temp,"\nprojectile[%d].is=%d ",i,projectile[i].is);
+            atp(&cont,toPrint,temp);
+        }
+    }
 
     //generate the frame and put it in toPrint
     for(i=0;i<HEIGHT;i++){
