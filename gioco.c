@@ -222,7 +222,6 @@ void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
 //print to log file
 void printlog(char a[]){
     if(islog){
-        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
         char mex[150];
         sprintf(mex,"\n[%d:%d:%d] %s",gethour(), getmin(), getsec(), a);
         fprintf(logfile,mex);
@@ -386,12 +385,6 @@ void physics(){
 void sort_projectiles(){
     int sortered=1,i=0,i2=0,i3=0,flag=1;
 
-    //projectile[] � l'array di strutture entity_projectile
-    //devo rimuovere dall'array gli elementi che hanno .is=0 e diminuire projectile_number del rispettivo numero di elementi eliminati
-    //e "portare indietro l'array" ES: 11011 p_n=5 -> 1111 p_n=4
-
-
-
     for(i=0;i<projectile_number&&flag;i++){
         if(projectile[i].is==0){
             sortered=0;
@@ -404,25 +397,11 @@ void sort_projectiles(){
 
     //sort the array
     while(sortered==0){
-        //system("pause");
-        sprintf(stemp,"projectie_number=%d\t",projectile_number);
-        printlog(stemp);
-        for(i3=0;i3<projectile_number;i3++){
-            sprintf(stemp,"projectile[%d].is=%d",i3,projectile[i3].is);
-            printlog(stemp);
-        }
 
         if(projectile_number==1){
-            printlog("if");
             projectile_number--;
         }else{
-            printlog("else");
             for(i2=i-1;i2<projectile_number-1;i2++){
-                printlog("else for");
-                sprintf(stemp,"i=%d, i2=%d",i,i2);
-                printlog(stemp);
-                sprintf(stemp,"projectile[%d].is=%d\t<=\tprojectile[%d].is=%d ",i2,projectile[i2].is,i2+1,projectile[i2+1]);
-                printlog(stemp);
                 projectile[i2]=projectile[i2+1];
 
             }
@@ -436,14 +415,6 @@ void sort_projectiles(){
             }
         }
     }
-    printlog("after sorting");
-    for(i=0;i<projectile_number&&flag;i++){
-        if(projectile[i].is==0){
-            sortered=0;
-            flag=0;
-        }
-    }
-    printlog("endlog\n");
 }
 
 //MAIN
@@ -487,7 +458,7 @@ int main(int argc, char *argv[]){
 
 
     argc--; //by default it starts from 1 (0 is the program name) , by decresing it by 1 it starts from 0
-    printf("\nargomenti: %d",argc);
+    printf("\narguments: %d",argc);
 
     //resize window
     if(argc>=2){
@@ -502,7 +473,7 @@ int main(int argc, char *argv[]){
         sscanf(argv[2], "%d", &term_b);
         resize(term_h,term_b);
     }else{
-        resize(HEIGHT+5,WIDTH+1);
+        resize(HEIGHT+7,WIDTH+1);
     }
 
 
@@ -615,19 +586,19 @@ void atp(int *cont, char toPrint[], char c[]){
 }
 
 void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH], entity_other other[], int other_number, entity_player player[], int player_number, entity_projectile projectile[], int projectile_number){
-    char toPrint[10000];
-    char temp[150];
+    char toPrint[100000];
+    char temp[200];
     int i,i2,i3,cont=0;
     int background=0;
 
     //generate debug infos in the frame
     if(debug){
-        sprintf(temp,"fps: %d\nfps_time: %d delay: %d\nPOINTS: use percentS and generate it outside according to the players number\nprojectile_number: %d\n",fps,fps_time,delay,projectile_number);
+        sprintf(temp,"fps: %d\nfps_time: %d delay: %d\nPOINTS: use percentS and generate it outside according to the players number\nprojectile_number: %d\nplayer_number: %d\nother_number: %d\n",fps,fps_time,delay,projectile_number,player_number,other_number);
         atp(&cont,toPrint,temp);
-        for(i=0;i<projectile_number;i++){
-            sprintf(temp,"\nprojectile[%d].is=%d ",i,projectile[i].is);
-            atp(&cont,toPrint,temp);
-        }
+        //for(i=0;i<projectile_number;i++){
+        //    sprintf(temp,"\nprojectile[%d].is=%d ",i,projectile[i].is);
+        //    atp(&cont,toPrint,temp);
+        //}
     }
 
     //generate the frame and put it in toPrint
