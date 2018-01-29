@@ -47,11 +47,12 @@
 	}
 
 	//to create a message box
-    	void MsgBox(char *contenuto, char *finestra, int tipo){
+    void MsgBox(char *contenuto, char *finestra, int tipo){
         char cmd[1024];
         sprintf(cmd, "xmessage -center \"%s\"", contenuto);
         if(fork()==0){
-            close(1); close(2);
+            close(1);
+            close(2);
             system(cmd);
             exit(0);
         }
@@ -185,8 +186,9 @@ int isrender=1;
 int other_number=0;
 int player_number=2;
 int projectile_number=0;
-char stemp[150];
+char stemp[500];
 FILE *logfile;
+FILE *logofile;
 entity_other other[OTHER_ENTITY_MAX];
 entity_player player[PLAYER_MAX];
 entity_projectile projectile[PROJECTILE_MAX];
@@ -278,23 +280,28 @@ void winizializza(char x, char world[HEIGHT][WIDTH]){
 
 //main menu
 int menu(){
-    char daprintare2[1024];
+    char daprintare2[200000];
     int cont=0,i=0;
+    char ch;
+    int menu_height=5;
+    int menu_width=20;
 
-    for(i=0;i<(HEIGHT-5)/2;i++){
+    for(i=0;i<(HEIGHT-menu_height)/2;i++){
         daprintare2[cont]='\n';
         cont++;
     }
-    for(i=0;i<(WIDTH-15)/2;i++){
-        daprintare2[cont]='\n';
+    for(i=0;i<(WIDTH-menu_width)/2;i++){
+        daprintare2[cont]=' ';
         cont++;
     }
-    daprintare2[cont]=218;
-    for(i=0;i<13;i++){
-        daprintare2[cont]=196;
-        cont++;
+
+    FILE *logofile = fopen("logo.txt", "r+");
+    while(ch){
+        fscanf(logofile, "%d", &ch);
+        atp(&cont,daprintare2,ch);
     }
-    daprintare2[cont]=191;
+    fclose(logofile);
+
     printf("%s",daprintare2);
     system("pause");
     return 0;
@@ -426,6 +433,8 @@ int main(int argc, char *argv[]){
 
     //menu for setting up players, controls etc
     //to asign strings, use strcpy() because you can't directly asign
+    menu();
+
     player[0].is=1;
     strcpy(player[0].name,"player 1");
     player[0].ascii=88;
