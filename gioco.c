@@ -180,15 +180,17 @@ int points1=0;
 int points2=0;
 int player1=88;
 int player2=79;
-int islog=0;
+int islog=1;
 int isrender=1;
 int other_number=0;
 int player_number=2;
 int projectile_number=0;
+char stemp[150];
 FILE *logfile;
 entity_other other[OTHER_ENTITY_MAX];
 entity_player player[PLAYER_MAX];
 entity_projectile projectile[PROJECTILE_MAX];
+
 
 //prototypes
 void clear(){system(CLEAR);}
@@ -202,7 +204,7 @@ int gethour();
 int getmin();
 int getsec();
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo);
-void printlog(char a[], int b, char c[]);
+void printlog(char a[]);
 void tick();
 int checkmovement(char ch, int p);
 void fire(int p);
@@ -218,10 +220,11 @@ void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
 }
 
 //print to log file
-void printlog(char a[], int b, char c[]){
+void printlog(char a[]){
     if(islog){
-        char mex[30];
-        sprintf(mex,"\n[%d:%d:%d] %s%d%s",gethour(), getmin(), getsec(), a, b, c);
+        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        char mex[150];
+        sprintf(mex,"\n[%d:%d:%d] %s",gethour(), getmin(), getsec(), a);
         fprintf(logfile,mex);
     }
 }
@@ -359,7 +362,6 @@ void physics(){
         if(projectile[i].h>HEIGHT||projectile[i].b>WIDTH||projectile[i].h<0||projectile[i].b<0){
             projectile[i].is=0;
         }
-
     }
     sort_projectiles();     //delete the projectiles with is=0 from the array
     for(i=0;i<projectile_number;i++){
@@ -382,7 +384,7 @@ void physics(){
 
 //delete the projectiles with is=0 from the array
 void sort_projectiles(){
-    int sortered=1,i=0,i2=0;
+    int sortered=1,i=0,i2=0,i3=0,flag=1;
 
     //projectile[] � l'array di strutture entity_projectile
     //devo rimuovere dall'array gli elementi che hanno .is=0 e diminuire projectile_number del rispettivo numero di elementi eliminati
@@ -390,17 +392,39 @@ void sort_projectiles(){
 
 
 
-    for(i=0;i<projectile_number;i++){
-        if(projectile[i].is==0) sortered=0;
+    for(i=0;i<projectile_number&&flag;i++){
+        if(projectile[i].is==0){
+            sortered=0;
+            flag=0;
+        }
     }
+    sprintf(stemp,"i=%d",i);
+    printlog(stemp);
+
 
     //sort the array
     while(sortered==0){
+        //system("pause");
+        sprintf(stemp,"projectie_number=%d\t",projectile_number);
+        printlog(stemp);
+        for(i3=0;i3<projectile_number;i3++){
+            sprintf(stemp,"projectile[%d].is=%d",i3,projectile[i3].is);
+            printlog(stemp);
+        }
+
         if(projectile_number==1){
+            printlog("if");
             projectile_number--;
         }else{
-            for(i2=i;i2<projectile_number-1;i2++){
+            printlog("else");
+            for(i2=i-1;i2<projectile_number-1;i2++){
+                printlog("else for");
+                sprintf(stemp,"i=%d, i2=%d",i,i2);
+                printlog(stemp);
+                sprintf(stemp,"projectile[%d].is=%d\t<=\tprojectile[%d].is=%d ",i2,projectile[i2].is,i2+1,projectile[i2+1]);
+                printlog(stemp);
                 projectile[i2]=projectile[i2+1];
+
             }
             projectile_number--;
         }
@@ -412,6 +436,14 @@ void sort_projectiles(){
             }
         }
     }
+    printlog("after sorting");
+    for(i=0;i<projectile_number&&flag;i++){
+        if(projectile[i].is==0){
+            sortered=0;
+            flag=0;
+        }
+    }
+    printlog("endlog\n");
 }
 
 //MAIN
