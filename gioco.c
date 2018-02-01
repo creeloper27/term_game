@@ -113,19 +113,6 @@
 
 #endif
 
-//matrix "world" --> contains the background
-#define HEIGHT 40
-#define WIDTH 88
-
-//array "entity_other" --> contains entities that aren't projectiles or players
-#define OTHER_ENTITY_MAX 10
-
-//array "player" --> contains the players
-#define PLAYER_MAX 10
-
-//array "projectile" --> contains the projectiles
-#define PROJECTILE_MAX 10
-
 //struct entity_other (contains all types of infos, it is used for other types of entities)
 typedef struct{
     int is;         //is it active?
@@ -140,23 +127,22 @@ typedef struct{
     //name
     char name[10];  //name
 
-    //controls, -1 if it hasn't one
-    char top;       //go-top key
-    char bottom;    //go-bottom key
-    char left;      //go-left key
-    char right;     //go-right key
-    char fire;      //fire key
-
 }entity_other;
 
 //struct players contains just needed infos
 typedef struct{
+    int pid;                //player ID
+    int status;             //0=death   1=alive
     int h;
     int b;
+    int dead_time;          //in ms, time when the player died
     char name[15];          //player name
-    char ascii;             //ascii character
+    char ascii;             //ascii character for the player
+    char asciidead;         //ascii character for the dead player
     char ascii_projectile;  //ascii of the projectile
     int direction;          //which way is he facing? 0-top 1-right 2-bottom 3-left
+    int k;                  //kills
+    int d;                  //deaths
     char top;               //go-top key
     char bottom;            //go-bottom key
     char left;              //go-left key
@@ -167,6 +153,7 @@ typedef struct{
 
 //struct players contains just needed infos
 typedef struct{
+    int pid;        //player ID
     int h;
     int b;
     char ascii;     //ascii character
@@ -175,6 +162,19 @@ typedef struct{
     int speed;      //speed
     int is;         //is it active?
 }entity_projectile;
+
+//matrix "world" --> contains the background
+#define HEIGHT 40
+#define WIDTH 88
+
+//array "entity_other" --> contains entities that aren't projectiles or players
+#define OTHER_ENTITY_MAX 10
+
+//array "player" --> contains the players
+#define PLAYER_MAX 10
+
+//array "projectile" --> contains the projectiles
+#define PROJECTILE_MAX 10
 
 //global variables
 int points1=0;
@@ -186,6 +186,9 @@ int isrender=1;
 int other_number=0;
 int player_number=2;
 int projectile_number=0;
+int setting_respawn=1;          //0=not respawn 1=respawn
+int setting_respawn_mode=0;     //0=random  1=spawns
+int setting_respawn_delay=2000; //delay in ms before respawning
 char stemp[500];
 FILE *logfile;
 FILE *logofile;
@@ -211,6 +214,8 @@ void tick();
 int checkmovement(char ch, int p);
 void fire(int p);
 void physics();
+void hitreg();
+void respawn_dead_players();
 void sort_projectiles();
 void atp(int *cont, char toPrint[], char c[]);
 
@@ -283,6 +288,7 @@ int menu(){
     char daprintare2[200000];
     int cont=0,i=0;
     char ch;
+
     int menu_height=5;
     int menu_width=20;
 
@@ -295,14 +301,35 @@ int menu(){
         cont++;
     }
 
-    FILE *logofile = fopen("logo.txt", "r+");
-    while(ch){
-        fscanf(logofile, "%d", &ch);
-        atp(&cont,daprintare2,ch);
+    int c;
+    FILE *file;
+    file = fopen("menu.txt", "r");
+    if (file) {
+    while ((c = getc(file)) != EOF)
+        putchar(c);
+        fclose(file);
     }
-    fclose(logofile);
-
-    printf("%s",daprintare2);
+//    FILE *menufile;
+//    menufile = fopen("menu.txt", "r+");
+//    if(menufile){
+//        fscanf(menufile,"%c",&ch);
+//        while (ch != '§'){
+//            daprintare2[cont]=ch;
+//            cont++;
+//            printf("%c",ch);
+//            system("pause");
+//            if(ch=='\n'){
+//                for(i=0;i<(WIDTH-menu_width)/2;i++){
+//                daprintare2[cont]=' ';
+//                cont++;
+//                }
+//            }
+//            fscanf(menufile,"%c",&ch);
+//        }
+//        fclose(menufile);
+//    }
+//
+//    printf("%s",daprintare2);
     system("pause");
     return 0;
 }
@@ -316,12 +343,17 @@ void tick(){
         //take the key from the buffer and put it in "ch"
         ch = getcharacter;
         for(i=0;i<player_number&&flag;i++){
-            if(checkmovement(ch, i)){
+            if(player[i].status==1){
+                if(checkmovement(ch, i)){
                     flag=0;    //exit if there is a mach
+                }
             }
         }
     }
     physics();
+    hitreg();
+    if(setting_respawn)
+        respawn_dead_players();
 }
 
 //controlla le corrispondenze con i tasti
@@ -352,6 +384,7 @@ int checkmovement(char ch, int p){
 void fire(int p){
     projectile_number++;
 
+    projectile[projectile_number-1].pid=player[p].pid;
     projectile[projectile_number-1].h=player[p].h;
     projectile[projectile_number-1].b=player[p].b;
     projectile[projectile_number-1].ascii=player[p].ascii_projectile;
@@ -398,8 +431,6 @@ void sort_projectiles(){
             flag=0;
         }
     }
-    sprintf(stemp,"i=%d",i);
-    printlog(stemp);
 
 
     //sort the array
@@ -424,6 +455,41 @@ void sort_projectiles(){
     }
 }
 
+//hits registration
+void hitreg(){
+    int i,i2;
+
+    for(i=0;i<player_number;i++){
+        for(i2=0;i2<projectile_number;i2++){
+            if(player[i].h==projectile[i2].h&&player[i].b==projectile[i2].b){
+                if(player[i].status==1){
+                    player[i].status=0;
+                    player[i].dead_time=clock();
+                    player[i].d++;
+                    player[projectile[i2].pid].k++;
+                }
+                projectile[i2].is=0;
+            }
+        }
+    }
+}
+
+//respawn dead players
+void respawn_dead_players(){
+    int i;
+
+    for(i=0;i<player_number;i++){
+        if(player[i].status==0&&clock()-player[i].dead_time>=setting_respawn_delay){
+            srand(time(NULL)+clock());
+            player[i].h=(rand()*2)%(HEIGHT-2);
+            srand(time(NULL)+clock());
+            player[i].b=(rand()*2)%(WIDTH-2);
+            player[i].status=1;
+        }
+    }
+
+}
+
 //MAIN
 int main(int argc, char *argv[]){
     char world[HEIGHT][WIDTH];
@@ -431,13 +497,35 @@ int main(int argc, char *argv[]){
     int Cstart,i=0,fps=0,fps_time;
     int term_h,term_b;
 
+    argc--; //by default it starts from 1 (0 is the program name) , by decresing it by 1 it starts from 0
+    printf("\narguments: %d",argc);
+
+    //resize window
+    if(argc>=2){
+        printf("\n\nargument_1: %s\nargument_2: %s\n\n",argv[1],argv[2]);
+    }
+
+    if(argc==1&&!strcmp(argv[1],"--help")){
+        printf("\nterm_game [terminal height] [terminal base]\n");
+        return 0;
+    }else if(argc==2){
+        sscanf(argv[1], "%d", &term_h);
+        sscanf(argv[2], "%d", &term_b);
+        resize(term_h,term_b);
+    }else{
+        resize(HEIGHT+7,WIDTH+1);
+    }
+
     //menu for setting up players, controls etc
     //to asign strings, use strcpy() because you can't directly asign
     menu();
 
-    player[0].is=1;
+    player[0].pid=0;
+    player[0].status=1;                 //0=dead    1=alive
+    player[0].is=1;                     //1=stay in the array   0=needs to be deleted
     strcpy(player[0].name,"player 1");
     player[0].ascii=88;
+    player[0].asciidead=206;
     player[0].h=10;
     player[0].b=10;
     player[0].ascii_projectile=43;
@@ -447,9 +535,12 @@ int main(int argc, char *argv[]){
     player[0].right='d';
     player[0].left='a';
 
+    player[1].pid=1;
+    player[1].status=1;
     player[1].is=1;
     strcpy(player[1].name,"player 2");
     player[1].ascii=79;
+    player[1].asciidead=206;
     player[1].h=HEIGHT-2;
     player[1].b=WIDTH-4;
     player[1].ascii_projectile=45;
@@ -463,27 +554,6 @@ int main(int argc, char *argv[]){
     //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
     //every time a player shoots create a struct on the projectile array
     //create function moveleft() moveright() fire().... etc
-
-
-
-    argc--; //by default it starts from 1 (0 is the program name) , by decresing it by 1 it starts from 0
-    printf("\narguments: %d",argc);
-
-    //resize window
-    if(argc>=2){
-        printf("\n\n%s\n%s\n\n",argv[1],argv[2]);
-    }
-
-    if(argc==1&&!strcmp(argv[1],"--help")){
-        printf("\nterm_game [terminal height] [terminal base]\n");
-        return 0;
-    }else if(argc==2){
-        sscanf(argv[1], "%d", &term_h);
-        sscanf(argv[2], "%d", &term_b);
-        resize(term_h,term_b);
-    }else{
-        resize(HEIGHT+7,WIDTH+1);
-    }
 
 
     //create log file
@@ -602,7 +672,9 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
 
     //generate debug infos in the frame
     if(debug){
-        sprintf(temp,"fps: %d\nfps_time: %d delay: %d\nPOINTS: use percentS and generate it outside according to the players number\nprojectile_number: %d\nplayer_number: %d\nother_number: %d\n",fps,fps_time,delay,projectile_number,player_number,other_number);
+        sprintf(temp,"clock: %d\nfps: %d\nfps_time: %d delay: %d\nPOINTS: use percentS and generate it outside according to the players number\nprojectile_number: %d\nplayer_number: %d\nother_number: %d\n",clock(),fps,fps_time,delay,projectile_number,player_number,other_number);
+        atp(&cont,toPrint,temp);
+        sprintf(temp,"\nP0 K=%d D=%d d_t=%d\tP1 K=%d D=%d d_t=%d\n",player[0].k,player[0].d,player[0].dead_time,player[1].k,player[1].d,player[1].dead_time);
         atp(&cont,toPrint,temp);
         //for(i=0;i<projectile_number;i++){
         //    sprintf(temp,"\nprojectile[%d].is=%d ",i,projectile[i].is);
@@ -620,8 +692,13 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
             //players
             for(i3=0;i3<player_number&&background;i3++){
                 if(player[i3].h==i&&player[i3].b==i2){
-                    toPrint[cont]=player[i3].ascii;
-                    cont++;
+                    if(player[i3].status==1){
+                        toPrint[cont]=player[i3].ascii;
+                        cont++;
+                    }else if(player[i3].status==0){
+                        toPrint[cont]=player[i3].asciidead;
+                        cont++;
+                    }
 
                     background=0;
                 }
