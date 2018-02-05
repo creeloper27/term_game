@@ -294,7 +294,7 @@ void winizializza(char x, char world[HEIGHT][WIDTH]){
 int character(int ch, int phase, int selected){
     //▒ 177 //ESC 27  //# 35 //< 60 //> 62  //░176
     switch(ch){
-    case 48 ... 57:   //0
+    case 48 ... 57:         //0
         if(ch==selected){
             if(phase)
                 return 60;  //<
@@ -319,20 +319,20 @@ void menu(int game_settings[], int *exit){
     //l_o           0-local(same computer)  1-online
     //gamemode      0-deathmatch            1-elimination
     while(*exit==0){
-        r=create_menu("menu.txt",33,28,3);
+        r=create_menu("menu.txt",33,30,3);
         switch(r){
         case 1:     //m_exit==1
             *exit=1;
             break;
         case 48:    //0
-            r=create_menu("menu_gamemode.txt",33,25,3);
+            r=create_menu("menu_gamemode.txt",33,30,3);
             break;
         case 49:    //1
-            r=create_menu("menu_multi.txt",33,25,3);
+            r=create_menu("menu_multi.txt",33,30,3);
             if(r==50)
                 break;
             else if(r==48){
-                r=create_menu("menu_gamemode.txt",33,25,3);
+                r=create_menu("menu_gamemode.txt",33,30,3);
                 if(r==48)
                     game_settings[2]=0;
                 else if(r==49)
@@ -343,7 +343,7 @@ void menu(int game_settings[], int *exit){
             }
             break;
         case 50:    //2
-            r=create_menu("menu_options.txt",33,25,1);
+            r=create_menu("menu_options.txt",33,30,1);
         }
     }
 }
@@ -391,6 +391,9 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
                     selected++;
                     break;
                 case 13:
+                    select=1;
+                    break;
+                case '\n':
                     select=1;
                     break;
             }
