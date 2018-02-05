@@ -11,6 +11,8 @@
 	#include <sys/ioctl.h>
 	#include <fcntl.h>
 
+	#define OS 0
+
 	//to get if a key has been pressed
 	int kbhit(void)
 	{
@@ -83,6 +85,8 @@
 #elif defined(_WIN32)||defined(_WIN64)
 
     #include <Windows.h>
+
+    #define OS 1
 
     //to sleep
 	void msleep(int ms){
@@ -164,7 +168,7 @@ typedef struct{
 }entity_projectile;
 
 //matrix "world" --> contains the background
-#define HEIGHT 40
+#define HEIGHT 35
 #define WIDTH 88
 
 //array "entity_other" --> contains entities that aren't projectiles or players
@@ -181,7 +185,7 @@ int points1=0;
 int points2=0;
 int player1=88;
 int player2=79;
-int islog=1;
+int islog=0;
 int isrender=1;
 int other_number=0;
 int player_number=2;
@@ -201,7 +205,8 @@ entity_projectile projectile[PROJECTILE_MAX];
 void clear(){system(CLEAR);}
 void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH], entity_other other[], int other_number, entity_player player[], int player_number, entity_projectile projectile[], int projectile_number);
 void winizializza(char x, char world[HEIGHT][WIDTH]);
-int menu();
+void menu(int game_settings[], int *exit);
+int create_menu(char file[], int menu_width, int menu_height, int menu_slots);
 int getday();
 int getmonth();
 int getyear();
@@ -218,6 +223,8 @@ void hitreg();
 void respawn_dead_players();
 void sort_projectiles();
 void atp(int *cont, char toPrint[], char c[]);
+int character(int ch, int phase, int selected);
+int play(int s_m, int l_o, int gamemode);
 
 //message box
 void MsgBoxv(char mex[1024],char dato,char nome[1024],int tipo){
@@ -283,55 +290,147 @@ void winizializza(char x, char world[HEIGHT][WIDTH]){
     }
 }
 
+//I use extended ascii characters so in character() i return the extended ascii character for windows and another character for linux
+int character(int ch, int phase, int selected){
+    //▒ 177 //ESC 27  //# 35 //< 60 //> 62  //░176
+    switch(ch){
+    case 48 ... 57:   //0
+        if(ch==selected){
+            if(phase)
+                return 60;  //<
+            else
+                return 62;  //>
+        }else{
+            if(OS)
+                return 176; //░
+            return 35;      //#
+        }
+    case ']':   //]
+        if(OS)
+            return 177;     //▒
+        return 35;          //#
+    }
+    return ch;
+}
+
+void menu(int game_settings[], int *exit){
+    int r;
+    //s_m           0-single_player         1-multi_player
+    //l_o           0-local(same computer)  1-online
+    //gamemode      0-deathmatch            1-elimination
+    while(*exit==0){
+        r=create_menu("menu.txt",33,28,3);
+        switch(r){
+        case 1:     //m_exit==1
+            *exit=1;
+            break;
+        case 48:    //0
+            r=create_menu("menu_gamemode.txt",33,25,3);
+            break;
+        case 49:    //1
+            r=create_menu("menu_multi.txt",33,25,3);
+            if(r==50)
+                break;
+            else if(r==48){
+                r=create_menu("menu_gamemode.txt",33,25,3);
+                if(r==48)
+                    game_settings[2]=0;
+                else if(r==49)
+                    game_settings[2]=1;
+            }
+            else if(r==49){
+                //online
+            }
+            break;
+        case 50:    //2
+            r=create_menu("menu_options.txt",33,25,1);
+        }
+    }
+}
 //main menu
-int menu(){
-    char daprintare2[200000];
-    int cont=0,i=0;
-    char ch;
+int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
+    char toPrint2[100000];
+    char string_menu[100000];
+    int cont=0, cont2=0, i=0, select=0;
+    int ch,m_exit=0,phase=0,selected=48;
+    int offset_top=((WIDTH-33)/2-(33/2))/2;
 
-    int menu_height=5;
-    int menu_width=20;
+    //                                 33 spazzi
+    //66 di larghezza totale
 
-    for(i=0;i<(HEIGHT-menu_height)/2;i++){
-        daprintare2[cont]='\n';
-        cont++;
+
+    FILE *menufile;
+    menufile = fopen(file, "r+");
+    if(menufile){
+        while ((ch = fgetc(menufile)) != EOF){
+            string_menu[cont2]=ch;
+            cont2++;
+            if(ch=='\n'){
+                for(i=0;i<(WIDTH-menu_width)/2-(menu_width/2);i++){
+                string_menu[cont2]=' ';
+                cont2++;
+                }
+            }
+        }
+        fclose(menufile);
     }
-    for(i=0;i<(WIDTH-menu_width)/2;i++){
-        daprintare2[cont]=' ';
-        cont++;
+    //usare %c,7 per suoni menu
+
+    while(m_exit==0){
+        if(kbhit()){
+            //take the key from the buffer and put it in "ch"
+            ch = getcharacter;
+            switch(ch){
+                case 27:
+                    m_exit=1;
+                    break;
+                case 'w':
+                    selected--;
+                    break;
+                case 's':
+                    selected++;
+                    break;
+                case 13:
+                    select=1;
+                    break;
+            }
+            if(selected<48)
+                selected=48+menu_slots-1;
+            if(selected>48+menu_slots-1)
+                selected=48;
+
+            if(select)
+                return selected;
+        }
+
+        for(i=0;i<offset_top;i++){
+            toPrint2[cont]='\n';
+            cont++;
+        }
+        for(i=0;i<(WIDTH-menu_width)/2-(menu_width/2);i++){
+            toPrint2[cont]=' ';
+            cont++;
+        }
+        for(i=0;i<cont2;i++){
+            toPrint2[cont]=character(string_menu[i],phase%2,selected);    //I use extended ascii characters so in character() i return the extended ascii character for windows and another character for linux
+            cont++;
+        }
+
+        for(i=0;i<HEIGHT-offset_top-menu_height;i++){
+            toPrint2[cont]='\n';
+            cont++;
+        }
+
+        printf("%s",toPrint2);
+        cont=0;
+        phase++;
+        if(phase>=100)
+            phase=0;
+
+        msleep(16);
     }
 
-    int c;
-    FILE *file;
-    file = fopen("menu.txt", "r");
-    if (file) {
-    while ((c = getc(file)) != EOF)
-        putchar(c);
-        fclose(file);
-    }
-//    FILE *menufile;
-//    menufile = fopen("menu.txt", "r+");
-//    if(menufile){
-//        fscanf(menufile,"%c",&ch);
-//        while (ch != '§'){
-//            daprintare2[cont]=ch;
-//            cont++;
-//            printf("%c",ch);
-//            system("pause");
-//            if(ch=='\n'){
-//                for(i=0;i<(WIDTH-menu_width)/2;i++){
-//                daprintare2[cont]=' ';
-//                cont++;
-//                }
-//            }
-//            fscanf(menufile,"%c",&ch);
-//        }
-//        fclose(menufile);
-//    }
-//
-//    printf("%s",daprintare2);
-    system("pause");
-    return 0;
+    return m_exit;
 }
 
 //tick
@@ -492,13 +591,14 @@ void respawn_dead_players(){
 
 //MAIN
 int main(int argc, char *argv[]){
-    char world[HEIGHT][WIDTH];
-    int delay=16;
-    int Cstart,i=0,fps=0,fps_time;
     int term_h,term_b;
+    int game_settings[3];
+    int exit=0;
 
     argc--; //by default it starts from 1 (0 is the program name) , by decresing it by 1 it starts from 0
     printf("\narguments: %d",argc);
+
+
 
     //resize window
     if(argc>=2){
@@ -513,48 +613,8 @@ int main(int argc, char *argv[]){
         sscanf(argv[2], "%d", &term_b);
         resize(term_h,term_b);
     }else{
-        resize(HEIGHT+7,WIDTH+1);
+        resize(HEIGHT+8,WIDTH+1);
     }
-
-    //menu for setting up players, controls etc
-    //to asign strings, use strcpy() because you can't directly asign
-    menu();
-
-    player[0].pid=0;
-    player[0].status=1;                 //0=dead    1=alive
-    player[0].is=1;                     //1=stay in the array   0=needs to be deleted
-    strcpy(player[0].name,"player 1");
-    player[0].ascii=88;
-    player[0].asciidead=206;
-    player[0].h=10;
-    player[0].b=10;
-    player[0].ascii_projectile=43;
-    player[0].fire='e';
-    player[0].top='w';
-    player[0].bottom='s';
-    player[0].right='d';
-    player[0].left='a';
-
-    player[1].pid=1;
-    player[1].status=1;
-    player[1].is=1;
-    strcpy(player[1].name,"player 2");
-    player[1].ascii=79;
-    player[1].asciidead=206;
-    player[1].h=HEIGHT-2;
-    player[1].b=WIDTH-4;
-    player[1].ascii_projectile=45;
-    player[1].fire='o';
-    player[1].top='i';
-    player[1].bottom='k';
-    player[1].right='l';
-    player[1].left='j';
-
-    //entity conterr� entit� che non sono ne giocatori ne proiettili, verr� utilizzato nel futuro
-    //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
-    //every time a player shoots create a struct on the projectile array
-    //create function moveleft() moveright() fire().... etc
-
 
     //create log file
     if(islog){
@@ -581,80 +641,99 @@ int main(int argc, char *argv[]){
         fprintf(logfile, "date: %d-%d-%d", getyear(), getmonth(), getday());
     }
 
-    //inizializza background
-    winizializza(' ', world);
-    i=0;
+    //menu for setting up players, controls etc
+    //to asign strings, use strcpy() because you can't directly asign
+    while(exit==0){
+        menu(game_settings,&exit);
 
-    while(points1<10&&points2<10){
+        player[0].pid=0;
+        player[0].status=1;                 //0=dead    1=alive
+        player[0].is=1;                     //1=stay in the array   0=needs to be deleted
+        strcpy(player[0].name,"player 1");
+        player[0].ascii=88;
+        player[0].asciidead=206;
+        player[0].h=10;
+        player[0].b=10;
+        player[0].ascii_projectile=43;
+        player[0].fire='e';
+        player[0].top='w';
+        player[0].bottom='s';
+        player[0].right='d';
+        player[0].left='a';
 
-        if(i==0){
-            Cstart=clock();
-            i++;
-        }else if(i==1){
-            i=0;
-            //fps_time=delay + time for fps
-            fps_time=clock()-Cstart;
-            fps=1000/fps_time;
-            //fps_time=time for fps
-            fps_time-=delay;
-        }
+        player[1].pid=1;
+        player[1].status=1;
+        player[1].is=1;
+        strcpy(player[1].name,"player 2");
+        player[1].ascii=79;
+        player[1].asciidead=206;
+        player[1].h=HEIGHT-2;
+        player[1].b=WIDTH-4;
+        player[1].ascii_projectile=45;
+        player[1].fire='o';
+        player[1].top='i';
+        player[1].bottom='k';
+        player[1].right='l';
+        player[1].left='j';
 
-        tick();
+        //entity conterr� entit� che non sono ne giocatori ne proiettili, verr� utilizzato nel futuro
+        //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
+        //every time a player shoots create a struct on the projectile array
+        //create function moveleft() moveright() fire().... etc
 
-        //struttura
-        /*
-        dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
-        movetop(player number) -> controlla se pu� muversi in quella direzione o no
-        */
-
-        //VECCHIA STRUTTURA
-/*
-        //death manager
-        if((h==ph2&&b==pb2)||(h==ph2&&b+1==pb2)){
-            h=2;
-            b=4;
-            points2++;
-            isProjectile2=0;
-            ph2=-1;
-            pb2=-1;
-        }
-        if((h2==ph&&b2==pb)||(h2==ph&&b-1==pb)){
-            h2=HEIGHT-3;
-            b2=WIDTH-6;
-            points1++;
-            isProjectile1=0;
-            ph=-1;
-            pb=-1;
-        }
-
-        //check for a winner
-        if(points1>=10){
-            Wc=player1;
-            W=1;
-        }
-        if(points2>=10){
-            Wc=player2;
-            W=2;
-        }
-        */
-
-        //render the frame
-        Render(1,fps ,fps_time ,delay, world, other, other_number, player, player_number, projectile, projectile_number);
-
-        //sleep 13 ms to try and get 60fps
-        msleep(delay);
+        play(game_settings[0],game_settings[1],game_settings[2]);
     }
-
-    //print the winner in the log
-    //printlog("game-over ",W," vince!");
     if(islog)
         fclose(logfile);
-
-    //print the winner in the messagebox
-    //msgBoxv("iL VINCITORE è: ",Wc,"GAME OVER",1);
     return 0;
 }
 
+int play(int s_m, int l_o, int gamemode){
+    //s_m           0-single_player         1-multi_player
+    //l_o           0-local(same computer)  1-online
+    //gamemode      0-deathmatch            1-elimination
+    int isPlaying=1;
+    char world[HEIGHT][WIDTH];
+    int delay=16;
+    int Cstart,i=0,fps=0,fps_time;
+
+
+    if(s_m==1&&l_o==0){    //multiplayer
+        //inizializza background
+        if(gamemode==0){
+            setting_respawn=1;
+            setting_respawn_mode=0;     //0=random  1=spawns
+        }else if(gamemode==1){
+            setting_respawn=0;
+        }else{
+            return -1;
+        }
+        winizializza(' ', world);
+        i=0;
+        while(isPlaying){
+
+            if(i==0){
+                Cstart=clock();
+                i++;
+            }else if(i==1){
+                i=0;
+                //fps_time=delay + time for fps
+                fps_time=clock()-Cstart;
+                fps=1000/fps_time;
+                //fps_time=time for fps
+                fps_time-=delay;
+            }
+
+                tick();
+
+                //render the frame
+                Render(1,fps ,fps_time ,delay, world, other, other_number, player, player_number, projectile, projectile_number);
+
+                //sleep 13 ms to try and get 60fps
+                msleep(delay);
+        }
+    }
+}
 //Add To (to)Print
 void atp(int *cont, char toPrint[], char c[]){
     int i;
@@ -740,3 +819,40 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
         printf("%s",toPrint);
 
 }
+
+//struttura
+        /*
+        dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
+        movetop(player number) -> controlla se pu� muversi in quella direzione o no
+        */
+
+        //VECCHIA STRUTTURA
+        /*
+        //death manager
+        if((h==ph2&&b==pb2)||(h==ph2&&b+1==pb2)){
+            h=2;
+            b=4;
+            points2++;
+            isProjectile2=0;
+            ph2=-1;
+            pb2=-1;
+        }
+        if((h2==ph&&b2==pb)||(h2==ph&&b-1==pb)){
+            h2=HEIGHT-3;
+            b2=WIDTH-6;
+            points1++;
+            isProjectile1=0;
+            ph=-1;
+            pb=-1;
+        }
+
+        //check for a winner
+        if(points1>=10){
+            Wc=player1;
+            W=1;
+        }
+        if(points2>=10){
+            Wc=player2;
+            W=2;
+        }
+        */
