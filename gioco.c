@@ -352,7 +352,7 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
     char toPrint2[100000];
     char string_menu[100000];
     int cont=0, cont2=0, i=0, select=0;
-    int ch,m_exit=0,phase=0,selected=48;
+    int ch,ch2,m_exit=0,phase=0,selected=48;
     int offset_top=((WIDTH-33)/2-(33/2))/2;
 
     //                                 33 spazzi
@@ -378,6 +378,7 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
 
     while(m_exit==0){
         if(kbhit()){
+            system("pause");
             //take the key from the buffer and put it in "ch"
             ch = getcharacter;
             switch(ch){
@@ -390,6 +391,18 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
                 case 's':
                     selected++;
                     break;
+                case 244:       //se è un carattere 244 [...] es, freccette
+                    system("pause");
+                    if(kbhit())
+                        ch2=getcharacter;
+                    switch(ch2){
+                    case 72:
+                        selected--;
+                        break;
+                    case 80:
+                        selected++;
+                        break;
+                    }
                 case 13:
                     select=1;
                     break;
