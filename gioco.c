@@ -315,28 +315,38 @@ int character(int ch, int phase, int selected){
 
 void menu(int game_settings[], int *exit){
     int r;
+    int play=0;
     //s_m           0-single_player         1-multi_player
     //l_o           0-local(same computer)  1-online
     //gamemode      0-deathmatch            1-elimination
-    while(*exit==0){
+    while(*exit==0&&play==0){
         r=create_menu("menu.txt",33,30,3);
         switch(r){
         case 1:     //m_exit==1
             *exit=1;
             break;
         case 48:    //0
+            game_settings[0]=0;
             r=create_menu("menu_gamemode.txt",33,30,3);
             break;
         case 49:    //1
+            game_settings[0]=1;
             r=create_menu("menu_multi.txt",33,30,3);
-            if(r==50)
+            if(r==50){
+                game_settings[1]=1;
                 break;
+            }
             else if(r==48){
+                game_settings[1]=0;
                 r=create_menu("menu_gamemode.txt",33,30,3);
-                if(r==48)
+                if(r==48){
                     game_settings[2]=0;
-                else if(r==49)
+                    play=1;
+                }
+                else if(r==49){
                     game_settings[2]=1;
+                    play=1;
+                }
             }
             else if(r==49){
                 //online
@@ -346,6 +356,11 @@ void menu(int game_settings[], int *exit){
             r=create_menu("menu_options.txt",33,30,1);
         }
     }
+    //s_m           0-single_player         1-multi_player
+    //l_o           0-local(same computer)  1-online
+    //gamemode      0-deathmatch            1-elimination
+    printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
+    system("pause");
 }
 //main menu
 int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
@@ -353,7 +368,6 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
     char string_menu[100000];
     int cont=0, cont2=0, i=0, select=0;
     int ch,ch2,m_exit=0,phase=0,selected=48;
-    int offset_top=((WIDTH-33)/2-(33/2))/2;
 
     //                                 33 spazzi
     //66 di larghezza totale
@@ -365,7 +379,7 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
         while ((ch = fgetc(menufile)) != EOF){
             string_menu[cont2]=ch;
             cont2++;
-            if(ch=='\n'){
+            if(ch=='\n'){   //imposta spaziatura di sinistra nel file
                 for(i=0;i<(WIDTH-menu_width)/2-(menu_width/2);i++){
                 string_menu[cont2]=' ';
                 cont2++;
@@ -378,9 +392,9 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
 
     while(m_exit==0){
         if(kbhit()){
-            system("pause");
             //take the key from the buffer and put it in "ch"
             ch = getcharacter;
+            ch2=' ';
             switch(ch){
                 case 27:
                     m_exit=1;
@@ -391,18 +405,13 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
                 case 's':
                     selected++;
                     break;
-                case 244:       //se è un carattere 244 [...] es, freccette
-                    system("pause");
-                    if(kbhit())
-                        ch2=getcharacter;
-                    switch(ch2){
-                    case 72:
+                case 224:       //se è un carattere 244 [...] es, freccette
+                    ch2=getcharacter;
+                    if(ch2==72)
                         selected--;
-                        break;
-                    case 80:
+                    else if(ch2==80)
                         selected++;
-                        break;
-                    }
+                    break;
                 case 13:
                     select=1;
                     break;
@@ -410,6 +419,8 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
                     select=1;
                     break;
             }
+
+
             if(selected<48)
                 selected=48+menu_slots-1;
             if(selected>48+menu_slots-1)
@@ -419,11 +430,11 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
                 return selected;
         }
 
-        for(i=0;i<offset_top;i++){
+        for(i=0;i<((WIDTH-menu_width)/2-(menu_width/2))/2;i++){
             toPrint2[cont]='\n';
             cont++;
         }
-        for(i=0;i<(WIDTH-menu_width)/2-(menu_width/2);i++){
+        for(i=0;i<(WIDTH-menu_width)/2-(menu_width/2);i++){ //imposta spaziatura di sinistra per la prima riga del file
             toPrint2[cont]=' ';
             cont++;
         }
@@ -432,18 +443,25 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
             cont++;
         }
 
-        for(i=0;i<HEIGHT-offset_top-menu_height;i++){
+        for(i=0;i<(HEIGHT+8)-menu_height-((WIDTH-menu_width)/2-(menu_width/2))/2;i++){
             toPrint2[cont]='\n';
             cont++;
         }
 
+        toPrint2[cont]='\0';
+        cont++;
+
         printf("%s",toPrint2);
+
+        for(i=0;i<cont;i++){
+            toPrint2[i]=' ';
+        }
         cont=0;
         phase++;
         if(phase>=100)
             phase=0;
 
-        msleep(16);
+        msleep(32);
     }
 
     return m_exit;
@@ -696,6 +714,8 @@ int main(int argc, char *argv[]){
         //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
         //every time a player shoots create a struct on the projectile array
         //create function moveleft() moveright() fire().... etc
+        printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
+        system("pause");
 
         play(game_settings[0],game_settings[1],game_settings[2]);
     }
