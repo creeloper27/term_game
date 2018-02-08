@@ -320,7 +320,7 @@ void menu(int game_settings[], int *exit){
     //l_o           0-local(same computer)  1-online
     //gamemode      0-deathmatch            1-elimination
     while(*exit==0&&play==0){
-        r=create_menu("menu.txt",33,30,3);
+        r=create_menu("menu.txt",33,28,3);
         switch(r){
         case 1:     //m_exit==1
             *exit=1;
@@ -331,14 +331,14 @@ void menu(int game_settings[], int *exit){
             break;
         case 49:    //1
             game_settings[0]=1;
-            r=create_menu("menu_multi.txt",33,30,3);
+            r=create_menu("menu_multi.txt",33,25,3);
             if(r==50){
                 game_settings[1]=1;
                 break;
             }
             else if(r==48){
                 game_settings[1]=0;
-                r=create_menu("menu_gamemode.txt",33,30,3);
+                r=create_menu("menu_gamemode.txt",33,25,3);
                 if(r==48){
                     game_settings[2]=0;
                     play=1;
@@ -353,14 +353,14 @@ void menu(int game_settings[], int *exit){
             }
             break;
         case 50:    //2
-            r=create_menu("menu_options.txt",33,30,1);
+            r=create_menu("menu_options.txt",33,14,1);
         }
     }
     //s_m           0-single_player         1-multi_player
     //l_o           0-local(same computer)  1-online
     //gamemode      0-deathmatch            1-elimination
-    printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
-    system("pause");
+    //printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
+    //system("pause");
 }
 //main menu
 int create_menu(char file[], int menu_width, int menu_height, int menu_slots){
@@ -714,8 +714,8 @@ int main(int argc, char *argv[]){
         //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
         //every time a player shoots create a struct on the projectile array
         //create function moveleft() moveright() fire().... etc
-        printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
-        system("pause");
+        //printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
+        //system("pause");
 
         play(game_settings[0],game_settings[1],game_settings[2]);
     }
