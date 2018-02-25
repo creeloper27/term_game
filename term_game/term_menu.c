@@ -160,6 +160,7 @@ int create_menu(char file[], int menu_width, int menu_height, int menu_slots, in
     int ch,ch2,m_exit=0,phase=0,selected=49;
     int h=0,b=0,temp1,temp2,check=0;
 
+
     readdim(&h,&b);
     if(resized==0){
         resize(h,b);    //diminuisce il buffer del terminale
@@ -309,4 +310,147 @@ int character(int ch, int phase, int selected, int c_title, int c_title2, int c_
         #endif
     }
     return ch;
+}
+
+
+//create a menu
+int create_advmenu(char file[], int *horizontal_selection, int horizontal_slots, int menu_width, int menu_height, int menu_slots, int c_title,int c_title2,int c_slots, int c_an1,int c_an2){
+    char toPrint2[100000];
+    char string_menu[100000], tempstring[50], tempstring2[50];
+    int cont=0, cont2=0, select=0,i,i2;
+    int ch,ch2,m_exit=0,phase=0,selected=49;
+    int h=0,b=0,temp1,temp2,check=0;
+
+    readdim(&h,&b);
+    if(resized==0){
+        resize(h,b);    //diminuisce il buffer del terminale
+        resized=1;
+    }
+
+    cont2=loadfile(string_menu,file,h,b,menu_width,menu_height);
+    //usare %c,7 per suoni menu
+
+    //printf("\n\nhor_sel: %d\n\n\n",*horizontal_selection);
+    //system("pause");
+
+    while(m_exit==0){
+        if(kbhit()){
+            //take the key from the buffer and put it in "ch"
+            ch = getcharacter;
+            ch2=' ';
+            switch(ch){
+                case 27:
+                    m_exit=1;
+                    break;
+                case 'w':
+                    selected--;
+                    break;
+                case 's':
+                    selected++;
+                    break;
+                case 'a':
+                    *horizontal_selection=*horizontal_selection-1;
+                    break;
+                case 'd':
+                    *horizontal_selection=*horizontal_selection+1;
+                    break;
+                case 224:       //se è un carattere 244 [...] es, freccette
+                    ch2=getcharacter;
+                    if(ch2==72)
+                        selected--;
+                    else if(ch2==80)
+                        selected++;
+                    else if(ch2==75)
+                        *horizontal_selection=*horizontal_selection-1;
+                    else if(ch2==77)
+                        *horizontal_selection=*horizontal_selection+1;
+                    break;
+                case 13:
+                    select=1;
+                    break;
+                case '\n':
+                    select=1;
+                    break;
+            }
+
+            if(selected<48)
+                selected=48+menu_slots-1;
+            if(selected>48+menu_slots-1)
+                selected=48;
+
+            if(*horizontal_selection>horizontal_slots)
+                *horizontal_selection=1;
+            else if(*horizontal_selection<=0)
+                *horizontal_selection=horizontal_slots;
+
+            if(select){
+                if(selected==48+menu_slots){
+                    return 0;
+                }else{
+                    return (48-selected)*-1;
+                }
+            }
+
+
+        }
+        for(i=0;i<(h-menu_height)/2;i++){
+            toPrint2[cont]='\n';
+            cont++;
+        }
+
+        for(i=0;i<cont2;i++){
+            if(string_menu[i]=='{'){
+                sprintf(tempstring,"%d",horizontal_slots);
+                for(i2=0;tempstring[i2]!='\0';i2++){
+                    toPrint2[cont]=tempstring[i2];
+                    cont++;
+                }
+
+            }else if(string_menu[i]=='}'){
+                sprintf(tempstring2,"%d",*horizontal_selection);
+                for(i2=0;tempstring2[i2]!='\0';i2++){
+                    toPrint2[cont]=tempstring2[i2];
+                    cont++;
+                }
+
+            }else{
+                toPrint2[cont]=character(string_menu[i],phase%2,selected,c_title,c_title2,c_slots,c_an1,c_an2);    //I use extended ascii characters so in character() i return the extended ascii character for windows and another character for linux
+                cont++;
+            }
+        }
+
+        for(i=0;i<(h-menu_height)/2;i++){
+            toPrint2[cont]='\n';
+            cont++;
+        }
+
+        toPrint2[cont]='\0';
+        cont++;
+
+        printf("%s",toPrint2);
+
+        for(i=0;i<cont;i++){
+            toPrint2[i]=' ';
+        }
+        cont=0;
+        phase++;
+        if(phase>=100)
+            phase=0;
+
+        if(check>=6){
+            temp1=h;
+            temp2=b;
+            readdim(&h,&b);
+
+            if(temp1!=h||temp2!=b){
+                cont2=loadfile(string_menu,file,h,b,menu_width,menu_height);
+            }
+            check=0;
+        }
+        check++;
+
+        tsleep(32);
+    }
+
+    return 0;
 }

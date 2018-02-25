@@ -55,4 +55,5 @@ void tclear();
 int create_menu(char file[], int menu_width, int menu_height, int menu_slots, int c_title,int c_title2,int c_slots, int c_an1,int c_an2);
 int character(int ch, int phase, int selected, int c_title, int c_title2, int c_slots, int c_an1,int c_an2);
 void readdim(int *h, int *b);
+int create_advmenu(char file[], int *horizontal_selection, int horizontal_slots, int menu_width, int menu_height, int menu_slots, int c_title,int c_title2,int c_slots, int c_an1,int c_an2);
 
