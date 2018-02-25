@@ -101,7 +101,7 @@ typedef struct{
 
 //matrix "world" --> contains the background
 #define HEIGHT 30
-#define WIDTH 100
+#define WIDTH 120
 
 #define DEBUG_HEIGHT 11
 
