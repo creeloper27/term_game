@@ -1,6 +1,6 @@
 //
 //
-//      ZANON GABRIELE
+//      CATTAI LORENZO
 //           2018
 //
 //
@@ -11,6 +11,8 @@
 // resize([lines(height)],[colums(width)]);                  ->  set the dimension of the terminal
 // kbhit();                                                  ->  return 1 if there is a key in the buffer
 // getcharacter;                                             ->  return the key pressed (you don't nedd to press enter)
+// create_menu();
+// create_advmenu();
 
 //when using readdim() and resize() remember that a colum is 2 characters wide
 
@@ -32,7 +34,7 @@
 	int kbhit(void);
 
     //to get the pressed key
-    #define getcharacter getchar2();
+    #define getcharacter getchar2()
 
 //compatibility for Windows systems
 #elif defined(_WIN32)||defined(_WIN64)
@@ -44,7 +46,7 @@
     int gettermbuf();
 
     //to get the pressed key
-    #define getcharacter getch();
+    #define getcharacter getch()
 
 #endif
 

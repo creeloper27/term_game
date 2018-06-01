@@ -1,13 +1,12 @@
 #include <stdio.h>
-#include "term_menu.h"
-
+#include <windows.h>
 int main(){
     int r;
 
-    resize(100,200);
-    while(r=create_menu("menu.txt",66,31,4,177,178,176,'<','>')){
-        printf("\nr: %d",r);
-        system("pause");
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    for(int k = 1; k < 255; k++){
+        SetConsoleTextAttribute(hConsole, k);
+        printf("\n%d: ciao");
     }
 
     return 0;

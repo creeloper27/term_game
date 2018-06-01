@@ -76,6 +76,7 @@ typedef struct{
     int weapon;
     int fire_time;
     int is;                 //is it active?
+    int color;
 }entity_player;
 
 //struct players contains just needed infos
@@ -103,7 +104,7 @@ typedef struct{
 #define HEIGHT 30
 #define WIDTH 120
 
-#define DEBUG_HEIGHT 11
+#define DEBUG_HEIGHT 12
 
 //array "entity_other" --> contains entities that aren't projectiles or players
 #define OTHER_ENTITY_MAX 10
@@ -115,10 +116,10 @@ typedef struct{
 #define PROJECTILE_MAX 20
 
 //weapon number
-#define WEAPON_NUMBER 2
+#define WEAPON_NUMBER 3
 
 //global variables
-int islog=0;
+int islog=1;
 int isrender=1;
 int other_number=0;
 int player_number=2;
@@ -161,6 +162,7 @@ void player_add();
 void player_remove(int player);
 void player_edit(int selected_player);
 void sread(char *string);
+void set_color(int color,int background_color);
 
 void player_add(){
     player_number++;
@@ -179,6 +181,7 @@ void player_add(){
     player[player_number-1].left='f';
     player[player_number-1].change_weapon='r';
     player[player_number-1].weapon=0;
+    player[player_number-1].color=3;
 }
 
 void player_edit(int selected_player){
@@ -203,7 +206,9 @@ void player_edit(int selected_player){
 
         do{
             printf("\n>>edit: ");
-            scanf("%d",&r);
+            putchar(r=getcharacter);
+            putchar('\n');
+            r=((int)r-48);
         }while(r<0||r>9);
 
         switch(r){
@@ -215,35 +220,35 @@ void player_edit(int selected_player){
             break;
         case 2:
             printf(">>new ascii character(alive): ");
-            scanf(" %c",&player[selected_player].ascii);
+            player[selected_player].ascii=getcharacter;
             break;
         case 3:
             printf(">>new ascii character(dead): ");
-            scanf(" %c",&player[selected_player].asciidead);
+            player[selected_player].asciidead=getcharacter;
             break;
         case 4:
             printf(">>new top: ");
-            scanf(" %c",&player[selected_player].top);
+            player[selected_player].top=getcharacter;
             break;
         case 5:
             printf(">>new bottom: ");
-            scanf(" %c",&player[selected_player].bottom);
+            player[selected_player].bottom=getcharacter;
             break;
         case 6:
             printf(">>new left: ");
-            scanf(" %c",&player[selected_player].left);
+            player[selected_player].left=getcharacter;
             break;
         case 7:
             printf(">>new right: ");
-            scanf(" %c",&player[selected_player].right);
+            player[selected_player].right=getcharacter;
             break;
         case 8:
             printf(">>new fire: ");
-            scanf(" %c",&player[selected_player].fire);
+            player[selected_player].fire=getcharacter;
             break;
         case 9:
             printf(">>new change_weapon: ");
-            scanf(" %c",&player[selected_player].change_weapon);
+            player[selected_player].change_weapon=getcharacter;
             break;
         }
     }
@@ -254,13 +259,25 @@ void sread(char *string){
     int i=0;
     char c;
     while(c!='\n'&&c!=13&&i<20){
-        c=getch();
+        c=getcharacter;
         putchar(c);
         string[i]=c;
         i++;
     }
     string[i+1]='\0';
 }
+
+/*void set_color(int color,int background_color){
+    int c;
+    c=background_color*16+color;
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, c);
+}
+
+void reset_color(){
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, 7);
+}*/
 
 void player_remove(int s_player){
     int i;
@@ -592,8 +609,6 @@ int main(int argc, char *argv[]){
     int exit=0,play=0;
 
     argc--; //by default it starts from 1 (0 is the program name) , by decresing it by 1 it starts from 0
-    printf("\narguments: %d",argc);
-
 
 
     //resize window
@@ -642,10 +657,15 @@ int main(int argc, char *argv[]){
     weapon[0].speed=1;
     weapon[0].bullet='*';
 
-    weapon[1].firerate=1500;
-    weapon[1].damage=90;
-    weapon[1].speed=3;
-    weapon[1].bullet='-';
+    weapon[1].firerate=500;
+    weapon[1].damage=50;
+    weapon[1].speed=1;
+    weapon[1].bullet='+';
+
+    weapon[2].firerate=1500;
+    weapon[2].damage=90;
+    weapon[2].speed=3;
+    weapon[2].bullet='-';
 
     player[0].pid=0;
     player[0].health=100;                 //0=dead    1=alive
@@ -662,6 +682,7 @@ int main(int argc, char *argv[]){
     player[0].left='a';
     player[0].change_weapon='q';
     player[0].weapon=0;
+    player[0].color=2;
 
     player[1].pid=1;
     player[1].health=100;
@@ -678,19 +699,13 @@ int main(int argc, char *argv[]){
     player[1].left='j';
     player[1].change_weapon='u';
     player[1].weapon=0;
+    player[1].color=3;
 
     //menu for setting up players, controls etc
     //to asign strings, use strcpy() because you can't directly asign
     while(exit==0){
         play=menu(game_settings,&exit);
-        //in range of the speed based on the player coordinates <- HITREG TO CACH FAST BULLETS
 
-        //entity conterr� entit� che non sono ne giocatori ne proiettili, verr� utilizzato nel futuro
-        //every time a game starts verryte entity and projectiles arrays and keep player array(just reset positions)
-        //every time a player shoots create a struct on the projectile array
-        //create function moveleft() moveright() fire().... etc
-        //printf("\ng_s[0]=%d\ng_s[1]=%d\ng_s[2]=%d\n",game_settings[0],game_settings[1],game_settings[2]);
-        //system("pause");
         if(play)
             playg(game_settings);
     }
@@ -706,7 +721,7 @@ int playg(int game_settings[]){
 
     int isPlaying=1;
     char world[HEIGHT][WIDTH];
-    int delay=16;
+    int delay=16,flag2=0;
     int Cstart,i=0,fps=0,fps_time;
     resize(HEIGHT+DEBUG_HEIGHT,WIDTH+1);
 
@@ -746,6 +761,26 @@ int playg(int game_settings[]){
                 tsleep(delay);
         }
     }
+//    if(game_settings[2]=0){
+//        for(i=0;i<player_number;i++){
+//            if(player[i].k==5){
+//                isPlaying=0;
+//                tclear();
+//                printf("\nPlayer i Won");
+//            }
+//        }
+//    }else if(game_settings[2]=1){
+//        flag2=1;
+//        for(i=0;i<player_number;i++){
+//            if(player[i]==)
+//        }
+//        if(flag2){
+//            isPlaying=0;
+//            tclear();
+//            printf("\nPlayer i Won");
+//        }
+
+
     return 0;
 }
 
@@ -769,7 +804,7 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
         //points: use percentS and generate it outside according to the players number
         sprintf(temp,"clock: %d\nfps: %d\nfps_time: %d delay: %d\n\nprojectile_number: %d\nplayer_number: %d\nother_number: %d\n",(int)clock(),fps,fps_time,delay,projectile_number,player_number,other_number);
         atp(&cont,toPrint,temp);
-        sprintf(temp,"\nP-1 K=%d D=%d d_t=%d HP=%d\nP-2 K=%d D=%d d_t=%d HP=%d\nP-3 K=%d D=%d d_t=%d HP=%d\nP-4 K=%d D=%d d_t=%d HP=%d\n",player[0].k,player[0].d,player[0].dead_time,player[0].health,player[1].k,player[1].d,player[1].dead_time,player[1].health,player[2].k,player[2].d,player[2].dead_time,player[2].health,player[3].k,player[3].d,player[3].dead_time,player[3].health);
+        sprintf(temp,"\nP-1 K=%d D=%d d_t=%d w=%d HP=%d\nP-2 K=%d D=%d d_t=%d w=%d HP=%d\nP-3 K=%d D=%d d_t=%d w=%d HP=%d\nP-4 K=%d D=%d d_t=%d w=%d HP=%d\n",player[0].k,player[0].d,player[0].dead_time,player[0].weapon,player[0].health,player[1].k,player[1].d,player[1].dead_time,player[1].weapon,player[1].health,player[2].k,player[2].d,player[2].dead_time,player[2].weapon,player[2].health,player[3].k,player[3].d,player[3].dead_time,player[3].weapon,player[3].health);
         atp(&cont,toPrint,temp);
         }
     //generate the frame and put it in toPrint
@@ -783,8 +818,10 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
             for(i3=0;i3<player_number&&background;i3++){
                 if(player[i3].h==i&&player[i3].b==i2){
                     if(player[i3].health>0){
+                        //set_color(player[i3].color,0);;
                         toPrint[cont]=player[i3].ascii;
                         cont++;
+                        //reset_color();
                     }else if(player[i3].health<=0){
                         toPrint[cont]=player[i3].asciidead;
                         cont++;
@@ -828,9 +865,3 @@ void Render(int debug,int fps,int fps_time,int delay, char world[HEIGHT][WIDTH],
         printf("%s",toPrint);
 }
 
-
-/*
-struttura
-    dentro tick() si controlla se ci sono proiettili e se il tasto premuto fa qualcosa, usare funzioni per muovere il player
-    movetop(player number) -> controlla se pu� muversi in quella direzione o no
-*/

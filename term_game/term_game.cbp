@@ -22,6 +22,7 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="main.h" />
 		<Unit filename="term_menu.c">
 			<Option compilerVar="CC" />
 		</Unit>

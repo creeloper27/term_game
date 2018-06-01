@@ -7,3 +7,4 @@
 -ADD Placeable objects like turrets that shoots (maybe add auto aiming AI)
 -Add singolplayer bots
 -Spostare respawn settings and gamemoe setting in un array game_settings[] e creaare una tabella di riferimento
+-in range of the speed based on the player coordinates <- HITREG TO CATCH FAST BULLETS (that teleport after the player)

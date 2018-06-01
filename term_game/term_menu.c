@@ -1,6 +1,6 @@
 //
 //
-//       ZANON GABRIELE
+//       CATTAI LORENZO
 //           2018
 //
 //
@@ -20,6 +20,7 @@ int resized=0;
     }
 
 	//to get if a key has been pressed
+	//source: stackoverflow
 	int kbhit(void)
 	{
 	  struct termios oldt, newt;
